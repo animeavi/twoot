@@ -29,7 +29,7 @@ from mastodon import Mastodon
 
 
 #TODO manage command line
-TWIT_ACCOUNT  = 'noirextreme'
+TWIT_ACCOUNT  = 'humansoflatees'
 MAST_ACCOUNT  = 'jc@noirextreme.com'
 MAST_PASSWORD  = 'NfH1D.Sdd63juBmK'
 MAST_INSTANCE = 'botsin.space'
@@ -41,7 +41,6 @@ MIN_DELAY = 0  # in minutes
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36'
 
 #TODO manage errors
-
 
 def cleanup_tweet_text(tt_iter):
     '''
@@ -122,6 +121,11 @@ headers.update(
 # Download twitter page of user
 response = requests.get('https://twitter.com/' + TWIT_ACCOUNT, headers=headers)
 
+# DEBUG: Save page to file
+of = open('twitter.html', 'w')
+of.write(response.text)
+of.close()
+
 # Verify that download worked
 if response.status_code != 200:
     print("Could not download twitter timeline. Aborting.")
@@ -138,7 +142,7 @@ for result in results:
     sih = result.find('div', class_='stream-item-header')
 
     # extract author
-    author = sih.find('strong', class_='fullname').string
+    author = sih.find('strong', class_='fullname').get_text()
 
     # Extract author's logo
     author_logo_url = sih.find('img', class_='avatar')['src']
@@ -150,7 +154,7 @@ for result in results:
     tweet_id = sih.find('a', class_='tweet-timestamp')['href']
 
     # Extract user name
-    user_name = re.search('^/(.+?)/', tweet_id).group(1)
+    author_account = re.search('^/(.+?)/', tweet_id).group(1)
 
     # Isolate tweet text container
     ttc = result.find('div', class_='js-tweet-text-container')
@@ -159,6 +163,13 @@ for result in results:
     tt_iter = ttc.find('p', class_='tweet-text').children
 
     tweet_text = cleanup_tweet_text(tt_iter)
+
+    # Check it the tweet is a retweet from somebody else
+    if author_account.lower() != TWIT_ACCOUNT.lower():
+        tweet_text = 'RT from ' + author + ' @' + author_account + '\n\n' + tweet_text
+
+    # Add footer with link to original tweet
+    tweet_text += '\n\nOriginal tweet : https://twitter.com' + tweet_id
 
     # Isolate attached media container
     amoc = result.find('div', class_='AdaptiveMediaOuterContainer')
@@ -178,7 +189,7 @@ for result in results:
     # Add dictionary with content of tweet to list
     tweet = {
         "author": author,
-        "user_name": user_name,
+        "author_account": author_account,
         "author_logo_url": author_logo_url,
         "timestamp": timestamp,
         "tweet_id": tweet_id,
@@ -190,80 +201,81 @@ for result in results:
 for t in tweets:
     print(t)
 
-# **********************************************************
-# Iterate tweets. Check if the tweet has already been posted
-# on Mastodon. If not, post it and add it to database
-# **********************************************************
 
-# Try to open database. If it does not exist, create it
-sql = sqlite3.connect('twoot.db')
-db = sql.cursor()
-db.execute('''CREATE TABLE IF NOT EXISTS toots (twitter_account TEXT, mastodon_instance TEXT,
-           mastodon_account TEXT, tweet_id TEXT, toot_id TEXT)''')
-
-# Create Mastodon application if it does not exist yet
-if not os.path.isfile(MAST_INSTANCE + '.secret'):
-    if not Mastodon.create_app(
-            'twoot',
-            api_base_url='https://' + MAST_INSTANCE,
-            to_file=MAST_INSTANCE + '.secret'
-    ):
-        print('failed to create app on ' + MAST_INSTANCE)
-        sys.exit(1)
-
-# Log in to mastodon instance
-try:
-    mastodon = Mastodon(
-        client_id=MAST_INSTANCE + '.secret',
-        api_base_url='https://' + MAST_INSTANCE
-    )
-
-    mastodon.log_in(
-        username=MAST_ACCOUNT,
-        password=MAST_PASSWORD,
-        scopes=['read', 'write'],
-        to_file=MAST_INSTANCE + ".secret"
-    )
-except:
-    print("ERROR: Login Failed")
-    sys.exit(1)
-
-# Upload tweets
-for tweet in tweets:
-    # Check in database if tweet has already been posted
-    db.execute('''SELECT * FROM toots WHERE twitter_account = ? AND mastodon_instance  = ? AND
-               mastodon_account = ? AND tweet_id = ?''',
-               (TWIT_ACCOUNT, MAST_INSTANCE, MAST_ACCOUNT, tweet['tweet_id']))
-    tweet_in_db = db.fetchone()
-
-    if tweet_in_db is not None:
-        # Skip to next tweet
-        continue
-
-    # Check that the tweet is not too young (might be deleted) or too old
-    age_in_hours = (time.time() - float(tweet['timestamp'])) / 3600.0
-    min_delay_in_hours = float(MIN_DELAY) / 60.0
-    max_age_in_hours = float(MAX_AGE) * 24.0
-
-    if age_in_hours < min_delay_in_hours or age_in_hours > max_age_in_hours:
-        # Skip to next tweet
-        continue
-
-    # Upload photos
-    media_ids = []
-    for photo in tweet['photos']:
-        # Download picture
-        media = requests.get(photo)
-
-        # Upload picture to Mastodon instance
-        media_posted = mastodon.media_post(media.content, mime_type=media.headers.get('content-type'))
-        media_ids.append(media_posted['id'])
-
-    # Post toot
-    toot = mastodon.status_post(tweet['tweet_text'], media_ids=media_ids, visibility='public')
-
-    # Insert toot id into database
-    if 'id' in toot:
-        db.execute("INSERT INTO toots VALUES ( ? , ? , ? , ? , ? )",
-                   (TWIT_ACCOUNT, MAST_INSTANCE, MAST_ACCOUNT, tweet['tweet_id'], toot['id']))
-        sql.commit()
+# # **********************************************************
+# # Iterate tweets. Check if the tweet has already been posted
+# # on Mastodon. If not, post it and add it to database
+# # **********************************************************
+#
+# # Try to open database. If it does not exist, create it
+# sql = sqlite3.connect('twoot.db')
+# db = sql.cursor()
+# db.execute('''CREATE TABLE IF NOT EXISTS toots (twitter_account TEXT, mastodon_instance TEXT,
+#            mastodon_account TEXT, tweet_id TEXT, toot_id TEXT)''')
+#
+# # Create Mastodon application if it does not exist yet
+# if not os.path.isfile(MAST_INSTANCE + '.secret'):
+#     if not Mastodon.create_app(
+#             'twoot',
+#             api_base_url='https://' + MAST_INSTANCE,
+#             to_file=MAST_INSTANCE + '.secret'
+#     ):
+#         print('failed to create app on ' + MAST_INSTANCE)
+#         sys.exit(1)
+#
+# # Log in to mastodon instance
+# try:
+#     mastodon = Mastodon(
+#         client_id=MAST_INSTANCE + '.secret',
+#         api_base_url='https://' + MAST_INSTANCE
+#     )
+#
+#     mastodon.log_in(
+#         username=MAST_ACCOUNT,
+#         password=MAST_PASSWORD,
+#         scopes=['read', 'write'],
+#         to_file=MAST_INSTANCE + ".secret"
+#     )
+# except:
+#     print("ERROR: Login Failed")
+#     sys.exit(1)
+#
+# # Upload tweets
+# for tweet in tweets:
+#     # Check in database if tweet has already been posted
+#     db.execute('''SELECT * FROM toots WHERE twitter_account = ? AND mastodon_instance  = ? AND
+#                mastodon_account = ? AND tweet_id = ?''',
+#                (TWIT_ACCOUNT, MAST_INSTANCE, MAST_ACCOUNT, tweet['tweet_id']))
+#     tweet_in_db = db.fetchone()
+#
+#     if tweet_in_db is not None:
+#         # Skip to next tweet
+#         continue
+#
+#     # Check that the tweet is not too young (might be deleted) or too old
+#     age_in_hours = (time.time() - float(tweet['timestamp'])) / 3600.0
+#     min_delay_in_hours = float(MIN_DELAY) / 60.0
+#     max_age_in_hours = float(MAX_AGE) * 24.0
+#
+#     if age_in_hours < min_delay_in_hours or age_in_hours > max_age_in_hours:
+#         # Skip to next tweet
+#         continue
+#
+#     # Upload photos
+#     media_ids = []
+#     for photo in tweet['photos']:
+#         # Download picture
+#         media = requests.get(photo)
+#
+#         # Upload picture to Mastodon instance
+#         media_posted = mastodon.media_post(media.content, mime_type=media.headers.get('content-type'))
+#         media_ids.append(media_posted['id'])
+#
+#     # Post toot
+#     toot = mastodon.status_post(tweet['tweet_text'], media_ids=media_ids, visibility='public')
+#
+#     # Insert toot id into database
+#     if 'id' in toot:
+#         db.execute("INSERT INTO toots VALUES ( ? , ? , ? , ? , ? )",
+#                    (TWIT_ACCOUNT, MAST_INSTANCE, MAST_ACCOUNT, tweet['tweet_id'], toot['id']))
+#         sql.commit()
