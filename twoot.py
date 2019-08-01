@@ -25,22 +25,22 @@ from bs4 import BeautifulSoup, element
 import sqlite3
 import time
 import re
-from mastodon import Mastodon
+from mastodon import Mastodon, MastodonError
 
 
 #TODO manage command line
-TWIT_ACCOUNT  = 'humansoflatees'
-MAST_ACCOUNT  = 'jc@noirextreme.com'
-MAST_PASSWORD  = 'NfH1D.Sdd63juBmK'
-MAST_INSTANCE = 'botsin.space'
-MAX_AGE = 1  # in days
+TWIT_ACCOUNT = 'blendernation'
+MAST_ACCOUNT = 'twoot@noirextreme.com'
+MAST_PASSWORD = 'AcX/ZK5Ml6fRVDFi'
+MAST_INSTANCE = 'mastodon.host'
+MAX_AGE = 5  # in days
 MIN_DELAY = 0  # in minutes
 
 
 #TODO submit random user agent from list
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36'
 
-#TODO manage errors
+#TODO log to file
 
 def cleanup_tweet_text(tt_iter):
     '''
@@ -198,84 +198,103 @@ for result in results:
     }
     tweets.append(tweet)
 
+# DEBUG: Print extracted tweets
 for t in tweets:
     print(t)
 
 
-# # **********************************************************
-# # Iterate tweets. Check if the tweet has already been posted
-# # on Mastodon. If not, post it and add it to database
-# # **********************************************************
-#
-# # Try to open database. If it does not exist, create it
-# sql = sqlite3.connect('twoot.db')
-# db = sql.cursor()
-# db.execute('''CREATE TABLE IF NOT EXISTS toots (twitter_account TEXT, mastodon_instance TEXT,
-#            mastodon_account TEXT, tweet_id TEXT, toot_id TEXT)''')
-#
-# # Create Mastodon application if it does not exist yet
-# if not os.path.isfile(MAST_INSTANCE + '.secret'):
-#     if not Mastodon.create_app(
-#             'twoot',
-#             api_base_url='https://' + MAST_INSTANCE,
-#             to_file=MAST_INSTANCE + '.secret'
-#     ):
-#         print('failed to create app on ' + MAST_INSTANCE)
-#         sys.exit(1)
-#
-# # Log in to mastodon instance
-# try:
-#     mastodon = Mastodon(
-#         client_id=MAST_INSTANCE + '.secret',
-#         api_base_url='https://' + MAST_INSTANCE
-#     )
-#
-#     mastodon.log_in(
-#         username=MAST_ACCOUNT,
-#         password=MAST_PASSWORD,
-#         scopes=['read', 'write'],
-#         to_file=MAST_INSTANCE + ".secret"
-#     )
-# except:
-#     print("ERROR: Login Failed")
-#     sys.exit(1)
-#
-# # Upload tweets
-# for tweet in tweets:
-#     # Check in database if tweet has already been posted
-#     db.execute('''SELECT * FROM toots WHERE twitter_account = ? AND mastodon_instance  = ? AND
-#                mastodon_account = ? AND tweet_id = ?''',
-#                (TWIT_ACCOUNT, MAST_INSTANCE, MAST_ACCOUNT, tweet['tweet_id']))
-#     tweet_in_db = db.fetchone()
-#
-#     if tweet_in_db is not None:
-#         # Skip to next tweet
-#         continue
-#
-#     # Check that the tweet is not too young (might be deleted) or too old
-#     age_in_hours = (time.time() - float(tweet['timestamp'])) / 3600.0
-#     min_delay_in_hours = float(MIN_DELAY) / 60.0
-#     max_age_in_hours = float(MAX_AGE) * 24.0
-#
-#     if age_in_hours < min_delay_in_hours or age_in_hours > max_age_in_hours:
-#         # Skip to next tweet
-#         continue
-#
-#     # Upload photos
-#     media_ids = []
-#     for photo in tweet['photos']:
-#         # Download picture
-#         media = requests.get(photo)
-#
-#         # Upload picture to Mastodon instance
-#         media_posted = mastodon.media_post(media.content, mime_type=media.headers.get('content-type'))
-#         media_ids.append(media_posted['id'])
-#
-#     # Post toot
-#     toot = mastodon.status_post(tweet['tweet_text'], media_ids=media_ids, visibility='public')
-#
-#     # Insert toot id into database
-#     if 'id' in toot:
-#         db.execute("INSERT INTO toots VALUES ( ? , ? , ? , ? , ? )",
-#                    (TWIT_ACCOUNT, MAST_INSTANCE, MAST_ACCOUNT, tweet['tweet_id'], toot['id']))
-#         sql.commit()
+# **********************************************************
+# Iterate tweets. Check if the tweet has already been posted
+# on Mastodon. If not, post it and add it to database
+# **********************************************************
+
+# Try to open database. If it does not exist, create it
+sql = sqlite3.connect('twoot.db')
+db = sql.cursor()
+db.execute('''CREATE TABLE IF NOT EXISTS toots (twitter_account TEXT, mastodon_instance TEXT,
+           mastodon_account TEXT, tweet_id TEXT, toot_id TEXT)''')
+
+# Create Mastodon application if it does not exist yet
+if not os.path.isfile(MAST_INSTANCE + '.secret'):
+    try:
+        Mastodon.create_app(
+            'twoot',
+            api_base_url='https://' + MAST_INSTANCE,
+            to_file=MAST_INSTANCE + '.secret'
+        )
+
+    except MastodonError as me:
+        print('failed to create app on ' + MAST_INSTANCE)
+        sys.exit(1)
+
+# Log in to Mastodon instance
+try:
+    mastodon = Mastodon(
+        client_id=MAST_INSTANCE + '.secret',
+        api_base_url='https://' + MAST_INSTANCE
+    )
+
+    mastodon.log_in(
+        username=MAST_ACCOUNT,
+        password=MAST_PASSWORD,
+        to_file=MAST_ACCOUNT + ".secret"
+    )
+
+except MastodonError as me:
+    print('ERROR: Login to ' + MAST_INSTANCE + ' Failed')
+    print(me)
+    sys.exit(1)
+
+# Upload tweets
+for tweet in reversed(tweets):
+    # Check in database if tweet has already been posted
+    db.execute('''SELECT * FROM toots WHERE twitter_account = ? AND mastodon_instance  = ? AND
+               mastodon_account = ? AND tweet_id = ?''',
+               (TWIT_ACCOUNT, MAST_INSTANCE, MAST_ACCOUNT, tweet['tweet_id']))
+    tweet_in_db = db.fetchone()
+
+    if tweet_in_db is not None:
+        # Skip to next tweet
+        continue
+
+    # Check that the tweet is not too young (might be deleted) or too old
+    age_in_hours = (time.time() - float(tweet['timestamp'])) / 3600.0
+    min_delay_in_hours = float(MIN_DELAY) / 60.0
+    max_age_in_hours = float(MAX_AGE) * 24.0
+
+    if age_in_hours < min_delay_in_hours or age_in_hours > max_age_in_hours:
+        # Skip to next tweet
+        continue
+
+    # Upload photos
+    media_ids = []
+    for photo in tweet['photos']:
+        # Download picture
+        media = requests.get(photo)
+
+        # Upload picture to Mastodon instance
+        media_posted = mastodon.media_post(media.content, mime_type=media.headers.get('content-type'))
+        media_ids.append(media_posted['id'])
+
+    # Post toot
+    try:
+        mastodon = Mastodon(
+            access_token=MAST_ACCOUNT + '.secret',
+            api_base_url='https://' + MAST_INSTANCE
+        )
+
+        if len(media_ids) == 0:
+            toot = mastodon.status_post(tweet['tweet_text'], visibility='public')
+        else:
+            toot = mastodon.status_post(tweet['tweet_text'], media_ids=media_ids, visibility='public')
+
+    except MastodonError as me:
+        print('ERROR: posting ' + tweet['tweet_text'] + ' to ' + MAST_INSTANCE + ' Failed')
+        print(me)
+        sys.exit(1)
+
+    # Insert toot id into database
+    if 'id' in toot:
+        db.execute("INSERT INTO toots VALUES ( ? , ? , ? , ? , ? )",
+                   (TWIT_ACCOUNT, MAST_INSTANCE, MAST_ACCOUNT, tweet['tweet_id'], toot['id']))
+        sql.commit()
