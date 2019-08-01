@@ -42,11 +42,14 @@ Default min delay is 0 minutes.
 
 # installation
 
-Create a folder and copy twoot.py in it.
+Make sure python3 is installed.
 
-Add command line to crontab.
+Twoot depends on beautifulsoup4 python module: `sudo pip install beautifulsoup4`
 
-For example, to run every 15 minutes starting at minute 1 of every hour
+In your user folder, execute `git clone https://gitlab.com/jeancf/twoot.git`
+to clone repo with twoot.py script.
+
+Add command line to crontab. For example, to run every 15 minutes starting at minute 1 of every hour
 and process the tweets posted in the last 5 days but at least 15 minutes
 ago:
 

@@ -146,9 +146,9 @@ def main(argv):
     response = requests.get('https://twitter.com/' + twit_account, headers=headers)
 
     # DEBUG: Save page to file
-    of = open('twitter.html', 'w')
-    of.write(response.text)
-    of.close()
+    # of = open('twitter.html', 'w')
+    # of.write(response.text)
+    # of.close()
 
     # Verify that download worked
     if response.status_code != 200:
@@ -223,8 +223,8 @@ def main(argv):
         tweets.append(tweet)
 
     # DEBUG: Print extracted tweets
-    for t in tweets:
-        print(t)
+    # for t in tweets:
+    #     print(t)
 
     # **********************************************************
     # Iterate tweets. Check if the tweet has already been posted
