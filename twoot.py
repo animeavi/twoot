@@ -95,7 +95,8 @@ def cleanup_tweet_text(tt_iter):
                     uni_list = uni_str.split('-')
                     # Extract individual unicode chars and add them to the tweet
                     for uni_char in uni_list:
-                        tweet_text += '&#x' + uni_char + ';'
+                        # convert string to hex value of unicode character
+                        tweet_text += chr(int(uni_char, 16))
 
         else:
             print("*** WARNING: No handler for tag in twitter text: " + tag.prettify())
