@@ -27,15 +27,29 @@ twoot.py [-h] -t <twitter account> -i <mastodon instance> -m <mastodon
 Assuming that the Twitter handle is @Megabot and the Mastodon account
 is @megabot@botsin.space
 
-|Switch |Description                                       | Example          | Req |
-|-------|--------------------------------------------------|------------------|-----|
-| -t    | twitter account name without '@'                 | Megabot          | Yes |
-| -i    | Mastodon instance domain name                    | botsin.space     | Yes |
-| -m    | Mastodon username                                | megabot          | Yes |
-| -p    | Mastodon password                                | my_Sup3r-S4f3*pw | Yes |
-| -a    | Max. age of tweet to post (in days)              | 1                | No  |
-| -d    | Min. delay before posting new tweet (in minutes) | 15               | No  |
+|Switch |Description                                       | Example            | Req |
+|-------|--------------------------------------------------|--------------------|-----|
+| -t    | twitter account name without '@'                 | `Megabot`          | Yes |
+| -i    | Mastodon instance domain name                    | `botsin.space`     | Yes |
+| -m    | Mastodon username                                | `megabot`          | Yes |
+| -p    | Mastodon password                                | `my_Sup3r-S4f3*pw` | Yes |
+| -a    | Max. age of tweet to post (in days)              | `1`                | No  |
+| -d    | Min. delay before posting new tweet (in minutes) | `15`               | No  |
 
 Default max age is 1 day. Decimal values are OK.
 
 Default min delay is 0 minutes.
+
+# installation
+
+Create a folder and copy twoot.py in it.
+
+Add command line to crontab.
+
+For example, to run every 15 minutes starting at minute 1 of every hour
+and process the tweets posted in the last 5 days but at least 15 minutes
+ago:
+
+```
+1-59/15 * * * * /path/to/twoot.py -t Megabot -i botsin.space -m megabot -p my_Sup3r-S4f3*pw -a 5 -d 15
+```
