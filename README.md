@@ -29,9 +29,9 @@ is @megabot@botsin.space
 
 |Switch |Description                                       | Example            | Req |
 |-------|--------------------------------------------------|--------------------|-----|
-| -t    | twitter account name without '@'                 | `Megabot`          | Yes |
+| -t    | twitter account name without '@'                 | `SuperDuperBot`    | Yes |
 | -i    | Mastodon instance domain name                    | `botsin.space`     | Yes |
-| -m    | Mastodon username                                | `megabot`          | Yes |
+| -m    | Mastodon username                                | `superduperbot`    | Yes |
 | -p    | Mastodon password                                | `my_Sup3r-S4f3*pw` | Yes |
 | -a    | Max. age of tweet to post (in days)              | `1`                | No  |
 | -d    | Min. delay before posting new tweet (in minutes) | `15`               | No  |
@@ -51,5 +51,5 @@ and process the tweets posted in the last 5 days but at least 15 minutes
 ago:
 
 ```
-1-59/15 * * * * /path/to/twoot.py -t Megabot -i botsin.space -m megabot -p my_Sup3r-S4f3*pw -a 5 -d 15
+1-59/15 * * * * /path/to/twoot.py -t SuperDuperBot -i botsin.space -m superduperbot -p my_Sup3r-S4f3*pw -a 5 -d 15
 ```
