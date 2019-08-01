@@ -24,8 +24,8 @@ twoot.py [-h] -t <twitter account> -i <mastodon instance> -m <mastodon
 
 # arguments
 
-Assuming that the Twitter handle is @Megabot and the Mastodon account
-is @megabot@botsin.space
+Assuming that the Twitter handle is @SuperDuperBot and the Mastodon account
+is @superduperbot@botsin.space
 
 |Switch |Description                                       | Example            | Req |
 |-------|--------------------------------------------------|--------------------|-----|
