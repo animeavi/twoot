@@ -20,6 +20,7 @@
 
 import sys
 import os
+import random
 import requests
 from bs4 import BeautifulSoup, element
 import sqlite3
@@ -29,16 +30,23 @@ from mastodon import Mastodon, MastodonError
 
 
 #TODO manage command line
-TWIT_ACCOUNT = 'blendernation'
+TWIT_ACCOUNT = 'hackaday'
 MAST_ACCOUNT = 'twoot@noirextreme.com'
 MAST_PASSWORD = 'AcX/ZK5Ml6fRVDFi'
 MAST_INSTANCE = 'mastodon.host'
 MAX_AGE = 5  # in days
 MIN_DELAY = 0  # in minutes
 
-
-#TODO submit random user agent from list
-USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36'
+USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:54.0) Gecko/20100101 Firefox/68.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1.2 Safari/605.1.15',
+    'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0)',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36 Edg/44.18362.267.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36 OPR/62.0.3331.99',
+    'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36 Vivaldi/2.6.1566.40',
+    'Mozilla/5.0 (Windows NT 6.3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 YaBrowser/19.6.2.503 Yowser/2.5 Safari/537.36'
+    ]
 
 #TODO log to file
 
@@ -111,10 +119,10 @@ tweets = []
 # Get a copy of the default headers that requests would use
 headers = requests.utils.default_headers()
 
-# Update default headers with user agent
+# Update default headers with randomly selected user agent
 headers.update(
     {
-        'User-Agent': USER_AGENT,
+        'User-Agent': USER_AGENTS[random.randint(0, len(USER_AGENTS)-1)],
     }
 )
 
