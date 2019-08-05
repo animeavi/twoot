@@ -145,10 +145,10 @@ def main(argv):
     # Download twitter page of user
     response = requests.get('https://twitter.com/' + twit_account, headers=headers)
 
-    # DEBUG: Save page to file
-    of = open('twitter.html', 'w')
-    of.write(response.text)
-    of.close()
+    ## DEBUG: Save page to file
+    #of = open('twitter.html', 'w')
+    #of.write(response.text)
+    #of.close()
 
     # Verify that download worked
     if response.status_code != 200:
