@@ -146,9 +146,9 @@ def main(argv):
     response = requests.get('https://twitter.com/' + twit_account, headers=headers)
 
     # DEBUG: Save page to file
-    # of = open('twitter.html', 'w')
-    # of.write(response.text)
-    # of.close()
+    of = open('twitter.html', 'w')
+    of.write(response.text)
+    of.close()
 
     # Verify that download worked
     if response.status_code != 200:
@@ -172,7 +172,10 @@ def main(argv):
         author_logo_url = sih.find('img', class_='avatar')['src']
 
         # Extract time stamp
-        timestamp = sih.find('a', class_='tweet-timestamp').find('span', class_='_timestamp')['data-time']
+        try:
+            timestamp = sih.find('a', class_='tweet-timestamp').find('span', class_='_timestamp')['data-time']
+        except AttributeError:
+            continue
 
         # Extract tweet id
         tweet_id = sih.find('a', class_='tweet-timestamp')['href']
