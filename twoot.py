@@ -213,6 +213,19 @@ def main(argv):
             if len(videos) != 0:
                 tweet_text += '\n\n[Embedded video in original tweet]'
 
+        # If no media was specifically added in the tweet, try to get the first picture
+        # with "twitter:image" meta tag in first linked page in tweet text
+        if not photos:
+            m = re.search(r"http[^ \n\xa0]*", tweet_text)
+            if m is not None:
+                link_url = m.group(0)
+                r = requests.get(link_url)
+                if r.status_code == 200:
+                    # Matches the first instance of either twitter:image or twitter:image:src meta tag
+                    match = re.search(r'<meta name="twitter:image(?:|:src)" content="(.+?)".*?>', r.text)
+                    if match is not None:
+                        photos.append(match.group(1))
+
         # Add dictionary with content of tweet to list
         tweet = {
             "author": author,
