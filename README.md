@@ -44,7 +44,7 @@ Default min delay is 0 minutes.
 
 Make sure python3 is installed.
 
-Twoot depends on sqlite3, beautifulsoup4 and mastodon python module: `sudo pip install sqlite3 beautifulsoup4 mastodon`
+Twoot depends on sqlite3, beautifulsoup4 and mastodon python module: `sudo pip install beautifulsoup4 Mastodon.py`
 
 In your user folder, execute `git clone https://gitlab.com/jeancf/twoot.git`
 to clone repo with twoot.py script.
