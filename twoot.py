@@ -27,7 +27,7 @@ from bs4 import BeautifulSoup, element
 import sqlite3
 import time
 import re
-from mastodon import Mastodon, MastodonError
+from mastodon import Mastodon, MastodonError, MastodonAPIError
 
 
 USER_AGENTS = [
@@ -312,8 +312,11 @@ def main(argv):
             media = requests.get(photo)
 
             # Upload picture to Mastodon instance
-            media_posted = mastodon.media_post(media.content, mime_type=media.headers.get('content-type'))
-            media_ids.append(media_posted['id'])
+            try:
+                media_posted = mastodon.media_post(media.content, mime_type=media.headers.get('content-type'))
+                media_ids.append(media_posted['id'])
+            except MastodonAPIError:  # Media cannot be uploaded (invalid format, dead link, etc.)
+                pass
 
         # Post toot
         try:
