@@ -27,7 +27,7 @@ from bs4 import BeautifulSoup, element
 import sqlite3
 import time
 import re
-from mastodon import Mastodon, MastodonError, MastodonAPIError
+from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalArgumentError
 
 
 USER_AGENTS = [
@@ -208,10 +208,10 @@ def main(argv):
             for p in photo_conts:
                 photos.append(p['data-image-url'])
 
-            # Mention presence in videos in tweet
+            # Mention presence of videos in tweet
             videos = amoc.find_all('div', class_='AdaptiveMedia-videoContainer')
             if len(videos) != 0:
-                tweet_text += '\n\n[Embedded video in original tweet]'
+                tweet_text += '\n\n[Video embedded in original tweet]'
 
         # If no media was specifically added in the tweet, try to get the first picture
         # with "twitter:image" meta tag in first linked page in tweet text
@@ -319,6 +319,8 @@ def main(argv):
                 media_posted = mastodon.media_post(media.content, mime_type=media.headers.get('content-type'))
                 media_ids.append(media_posted['id'])
             except MastodonAPIError:  # Media cannot be uploaded (invalid format, dead link, etc.)
+                pass
+            except MastodonIllegalArgumentError:  # Could not determine mime type of content
                 pass
 
         # Post toot
