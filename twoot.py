@@ -316,7 +316,7 @@ def main(argv):
 
             # Fix to avoid media_post failing because mime_type is NoneType
             # "Can only concatenate str to str"
-            mime_type = media.headers.get('content-type')
+            mime_type = media.headers['content-type']
             if type(mime_type) is None:
                 mime_type = ""
 
