@@ -314,15 +314,11 @@ def main(argv):
             # Download picture
             media = requests.get(photo)
 
-            # Fix to avoid media_post failing because mime_type is NoneType
-            # "Can only concatenate str to str"
             mime_type = media.headers['content-type']
-            if type(mime_type) is None:
-                mime_type = ""
 
             # Upload picture to Mastodon instance
             try:
-                media_posted = mastodon.media_post(media.content, mime_type)
+                media_posted = mastodon.media_post(media.content)
                 media_ids.append(media_posted['id'])
             except MastodonAPIError:  # Media cannot be uploaded (invalid format, dead link, etc.)
                 pass
