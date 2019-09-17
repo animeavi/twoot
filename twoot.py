@@ -314,11 +314,9 @@ def main(argv):
             # Download picture
             media = requests.get(photo)
 
-            mime_type = media.headers['content-type']
-
             # Upload picture to Mastodon instance
             try:
-                media_posted = mastodon.media_post(media.content)
+                media_posted = mastodon.media_post(media.content, mime_type=media.headers['content-type'])
                 media_ids.append(media_posted['id'])
             except MastodonAPIError:  # Media cannot be uploaded (invalid format, dead link, etc.)
                 pass
