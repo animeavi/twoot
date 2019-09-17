@@ -73,7 +73,7 @@ def cleanup_tweet_text(tt_iter):
                     # If it is not a link to some embedded content, keep raw link
                     if not tag.has_attr('data-pre-embedded') and tag.has_attr('data-expanded-url'):
                         # Add a sometimes missing space before url
-                        if tweet_text[len(tweet_text)-1] != ' ' and tweet_text[len(tweet_text)-1] != '\n':
+                        if not tweet_text.endswith(' ') and not tweet_text.endswith('\n'):
                             tweet_text += ' '
                         # Add full url
                         tweet_text += tag['data-expanded-url']
