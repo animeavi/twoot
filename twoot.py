@@ -29,16 +29,12 @@ import time
 import re
 from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalArgumentError
 
-
+# Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
 USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:54.0) Gecko/20100101 Firefox/68.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1.2 Safari/605.1.15',
-    'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0)',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36 Edg/44.18362.267.0',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36 OPR/62.0.3331.99',
-    'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36 Vivaldi/2.6.1566.40',
-    'Mozilla/5.0 (Windows NT 6.3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 YaBrowser/19.6.2.503 Yowser/2.5 Safari/537.36'
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:54.0) Gecko/20100101 Firefox/69.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36 Edg/44.18362.329.0',
     ]
 
 #TODO log to file
@@ -314,11 +310,9 @@ def main(argv):
             # Download picture
             media = requests.get(photo)
 
-            mime_type = media.headers['content-type']
-
             # Upload picture to Mastodon instance
             try:
-                media_posted = mastodon.media_post(media.content)
+                media_posted = mastodon.media_post(media.content, mime_type=media.headers['content-type'])
                 media_ids.append(media_posted['id'])
             except MastodonAPIError:  # Media cannot be uploaded (invalid format, dead link, etc.)
                 pass
