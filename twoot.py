@@ -216,13 +216,13 @@ def main(argv):
             if m is not None:
                 link_url = m.group(0)
                 try:
-                    r = requests.get(link_url)
+                    r = requests.get(link_url, timeout=10)
                     if r.status_code == 200:
                         # Matches the first instance of either twitter:image or twitter:image:src meta tag
                         match = re.search(r'<meta name="twitter:image(?:|:src)" content="(.+?)".*?>', r.text)
                         if match is not None:
                             photos.append(match.group(1))
-                except ConnectionError:
+                except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
                     pass
 
         # Add dictionary with content of tweet to list
