@@ -221,7 +221,8 @@ def main(argv):
                         # Matches the first instance of either twitter:image or twitter:image:src meta tag
                         match = re.search(r'<meta name="twitter:image(?:|:src)" content="(.+?)".*?>', r.text)
                         if match is not None:
-                            photos.append(match.group(1))
+                            url = match.group(1).replace('&amp;', '&')  # Remove HTML-safe encoding from URL if any
+                            photos.append(url)
                 except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
                     pass
 
