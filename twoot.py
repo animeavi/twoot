@@ -222,7 +222,7 @@ def main(argv):
                         match = re.search(r'<meta name="twitter:image(?:|:src)" content="(.+?)".*?>', r.text)
                         if match is not None:
                             photos.append(match.group(1))
-                except ConnectionError:
+                except (ConnectionError, requests.exceptions.ContentDecodingError):
                     pass
 
         # Add dictionary with content of tweet to list
