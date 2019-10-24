@@ -319,6 +319,8 @@ def main(argv):
                 pass
             except MastodonIllegalArgumentError:  # Could not determine mime type of content
                 pass
+            except TypeError:
+                pass
 
         # Post toot
         try:
