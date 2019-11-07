@@ -308,19 +308,20 @@ def main(argv):
         # Upload photos
         media_ids = []
         for photo in tweet['photos']:
+            media = False
             # Download picture
-            media = requests.get(photo)
+            try:
+                media = requests.get(photo)
+            except:
+                pass
 
             # Upload picture to Mastodon instance
-            try:
-                media_posted = mastodon.media_post(media.content, mime_type=media.headers['content-type'])
-                media_ids.append(media_posted['id'])
-            except MastodonAPIError:  # Media cannot be uploaded (invalid format, dead link, etc.)
-                pass
-            except MastodonIllegalArgumentError:  # Could not determine mime type of content
-                pass
-            except TypeError:
-                pass
+            if media:
+                try:
+                    media_posted = mastodon.media_post(media.content, mime_type=media.headers['content-type'])
+                    media_ids.append(media_posted['id'])
+                except (MastodonAPIError, MastodonIllegalArgumentError, TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
+                    pass
 
         # Post toot
         try:
