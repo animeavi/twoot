@@ -94,6 +94,10 @@ def cleanup_tweet_text(tt_iter):
                         # convert string to hex value of unicode character
                         tweet_text += chr(int(uni_char, 16))
 
+        # elif tag is a geographical point of interest
+        elif tag.name == 'span' and tag['class'][0] == 'tweet-poi-geo-text':
+            pass
+
         else:
             print("*** WARNING: No handler for tag in twitter text: " + tag.prettify())
 
