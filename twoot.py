@@ -227,7 +227,10 @@ def main(argv):
                         if match is not None:
                             url = match.group(1).replace('&amp;', '&')  # Remove HTML-safe encoding from URL if any
                             photos.append(url)
-                except (requests.exceptions.ConnectionError, requests.exceptions.Timeout, requests.exceptions.ContentDecodingError):
+                except (requests.exceptions.ConnectionError,
+                        requests.exceptions.Timeout,
+                        requests.exceptions.ContentDecodingError,
+                        requests.exceptions.TooManyRedirects):
                     pass
 
         # Add dictionary with content of tweet to list
