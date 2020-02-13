@@ -142,21 +142,43 @@ def main(argv):
         }
     )
 
-    # Download twitter page of user
-    response = requests.get('https://twitter.com/' + twit_account, headers=headers)
+    url = 'https://mobile.twitter.com/' + twit_account
+    # Download twitter page of user. We should get a 'no javascript' landing page and some cookies
+    r1 = requests.get(url, headers=headers)
 
-    ## DEBUG: Save page to file
-    #of = open('twitter.html', 'w')
-    #of.write(response.text)
-    #of.close()
+    # DEBUG: Save page to file
+    of = open('no_js_page.html', 'w')
+    of.write(r1.text)
+    of.close()
+
+    # Verify that this is the no_js page that we expected
+    soup = BeautifulSoup(r1.text, 'html.parser')
+    assert (str(soup.form.p.string).find('JavaScript is disabled') != -1),\
+        'this is not the no_js page we expected. Quitting'
+
+    # Submit POST form response with cookies
+    headers.update(
+        {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Referer': url,
+        }
+    )
+
+    response = requests.post('https://mobile.twitter.com/i/nojs_router?path=%2F' + twit_account, headers=headers, cookies=r1.cookies)
+
+    # DEBUG: Save page to file
+    of = open('twitter.html', 'w')
+    of.write(response.text)
+    of.close()
 
     # Verify that download worked
-    if response.status_code != 200:
-        print("Could not download twitter timeline. Aborting.")
-        exit(-1)
+    assert response.status_code == 200,\
+        'The twitter page did not download correctly. Aborting'
 
-    # Build tree of html elements for processing
+    # Verify that we now have the correct twitter page
     soup = BeautifulSoup(response.text, 'html.parser')
+    assert (str(soup.head.title.string).find(twit_account) != -1),\
+        'This is not the correct twitter page. Quitting'
 
     # Extract twitter timeline
     results = soup.find_all('div', class_='content')
