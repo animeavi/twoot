@@ -66,11 +66,17 @@ def cleanup_tweet_text(tt_iter):
 
                 # If element is an external link
                 elif tc == 'twitter_external_link':
-                    # Add a sometimes missing space before url
-                    if not tweet_text.endswith(' ') and not tweet_text.endswith('\n'):
-                        tweet_text += ' '
-                    # Add full url
-                    tweet_text += tag['data-expanded-url']
+                    # If element is a simple link
+                    if tag.has_attr('data-expanded-url'):
+                        # Add a sometimes missing space before url
+                        if not tweet_text.endswith(' ') and not tweet_text.endswith('\n'):
+                            tweet_text += ' '
+                        # Add full url
+                        tweet_text += tag['data-expanded-url']
+                    # If element is a picture
+                    elif tag.has_attr('data-url'):
+                        # TODO handle photo
+                        pass
 
         # If element is hashflag (hashtag + icon), handle as simple hashtag
         elif tag.name == 'span' and tag['class'][0] == 'twitter-hashflag-container':
@@ -151,7 +157,7 @@ def main(argv):
 
     # Verify that this is the no_js page that we expected
     soup = BeautifulSoup(r1.text, 'html.parser')
-    assert (str(soup.form.p.string).find('JavaScript is disabled') != -1),\
+    assert 'JavaScript is disabled' in str(soup.form.p.string),\
         'this is not the no_js page we expected. Quitting'
 
     # Submit POST form response with cookies
@@ -175,13 +181,16 @@ def main(argv):
 
     # Verify that we now have the correct twitter page
     soup = BeautifulSoup(response.text, 'html.parser')
-    assert (str(soup.head.title.string).find(twit_account) != -1),\
+    assert twit_account.lower() in str(soup.head.title.string).lower(),\
         'This is not the correct twitter page. Quitting'
 
     # Extract twitter timeline
     results = soup.find_all('table', class_='tweet')
 
     for result in results:
+        # Extract tweet id
+        tweet_id = str(result['href']).strip('?p=v')
+
         # Isolate tweet header
         sih = result.find('tr', class_='tweet-header')
 
@@ -201,9 +210,6 @@ def main(argv):
         # Isolate tweet text container
         ttc = result.find('tr', class_='tweet-container')
 
-        # Extract tweet id
-        tweet_id = ttc.find('div', class_='tweet-text')['data-id']
-
         # extract iterator over tweet text contents
         tt_iter = ttc.find('div', class_='dir-ltr').children
 
@@ -211,10 +217,10 @@ def main(argv):
 
         # Check it the tweet is a retweet from somebody else
         if author_account.lower() != twit_account.lower():
-            tweet_text = 'RT from ' + author + ' @' + author_account + '\n\n' + tweet_text
+            tweet_text = 'RT from ' + author + '(@' + author_account + '\n\n)' + tweet_text
 
         # Add footer with link to original tweet
-        tweet_text += '\n\nOriginal tweet : https://twitter.com' + tweet_id
+        tweet_text += '\n\nOriginal tweet : https://twitter.com/' + tweet_id
 
         # Isolate attached media container
         amoc = result.find('div', class_='AdaptiveMediaOuterContainer')
