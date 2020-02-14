@@ -64,15 +64,13 @@ def cleanup_tweet_text(tt_iter):
                 elif tc == 'twitter-atreply':
                     tweet_text += tag.get_text()
 
-                # If element is a link
-                elif tc == 'twitter-timeline-link':
-                    # If it is not a link to some embedded content, keep raw link
-                    if not tag.has_attr('data-pre-embedded') and tag.has_attr('data-expanded-url'):
-                        # Add a sometimes missing space before url
-                        if not tweet_text.endswith(' ') and not tweet_text.endswith('\n'):
-                            tweet_text += ' '
-                        # Add full url
-                        tweet_text += tag['data-expanded-url']
+                # If element is an external link
+                elif tc == 'twitter_external_link':
+                    # Add a sometimes missing space before url
+                    if not tweet_text.endswith(' ') and not tweet_text.endswith('\n'):
+                        tweet_text += ' '
+                    # Add full url
+                    tweet_text += tag['data-expanded-url']
 
         # If element is hashflag (hashtag + icon), handle as simple hashtag
         elif tag.name == 'span' and tag['class'][0] == 'twitter-hashflag-container':
@@ -181,35 +179,33 @@ def main(argv):
         'This is not the correct twitter page. Quitting'
 
     # Extract twitter timeline
-    results = soup.find_all('div', class_='content')
+    results = soup.find_all('table', class_='tweet')
 
     for result in results:
         # Isolate tweet header
-        sih = result.find('div', class_='stream-item-header')
+        sih = result.find('tr', class_='tweet-header')
 
         # extract author
         author = sih.find('strong', class_='fullname').get_text()
 
         # Extract author's logo
-        author_logo_url = sih.find('img', class_='avatar')['src']
+        author_logo_url = sih.find('img', alt=author)['src']
 
-        # Extract time stamp
-        try:
-            timestamp = sih.find('a', class_='tweet-timestamp').find('span', class_='_timestamp')['data-time']
-        except AttributeError:
-            continue
-
-        # Extract tweet id
-        tweet_id = sih.find('a', class_='tweet-timestamp')['href']
+        # TODO: Extract time stamp by following link under td.timestamp
+        import datetime
+        timestamp = datetime.datetime.now().timestamp()
 
         # Extract user name
-        author_account = re.search('^/(.+?)/', tweet_id).group(1)
+        author_account = str(sih.find('div', class_='username').span.next_sibling).strip('\n ')
 
         # Isolate tweet text container
-        ttc = result.find('div', class_='js-tweet-text-container')
+        ttc = result.find('tr', class_='tweet-container')
+
+        # Extract tweet id
+        tweet_id = ttc.find('div', class_='tweet-text')['data-id']
 
         # extract iterator over tweet text contents
-        tt_iter = ttc.find('p', class_='tweet-text').children
+        tt_iter = ttc.find('div', class_='dir-ltr').children
 
         tweet_text = cleanup_tweet_text(tt_iter)
 
