@@ -169,9 +169,9 @@ def main(argv):
         'The twitter page did not download correctly. Aborting'
 
     # DEBUG: Save page to file
-    of = open('no_js_page.html', 'w')
-    of.write(no_js_page.text)
-    of.close()
+    #of = open('no_js_page.html', 'w')
+    #of.write(no_js_page.text)
+    #of.close()
 
     # Verify that this is the no_js page that we expected
     soup = BeautifulSoup(no_js_page.text, 'html.parser')
@@ -193,9 +193,9 @@ def main(argv):
         'The twitter page did not download correctly. Aborting'
 
     # DEBUG: Save page to file
-    of = open(twit_account + '.html', 'w')
-    of.write(twit_account_page.text)
-    of.close()
+    #of = open(twit_account + '.html', 'w')
+    #of.write(twit_account_page.text)
+    #of.close()
 
     # Make soup
     soup = BeautifulSoup(twit_account_page.text, 'html.parser')
@@ -224,9 +224,9 @@ def main(argv):
             'The twitter page did not download correctly. Aborting'
 
         # DEBUG: Save page to file
-        of = open('full_status_page.html', 'w')
-        of.write(full_status_page.text)
-        of.close()
+        #of = open('full_status_page.html', 'w')
+        #of.write(full_status_page.text)
+        #of.close()
 
         # Make soup
         soup = BeautifulSoup(full_status_page.text, 'html.parser')
@@ -269,8 +269,10 @@ def main(argv):
 
         photos = []  # The no_js version of twitter only shows one photo
 
+        # Check if there are photos attached
         media = tmt.find('div', class_='media')
         if media:
+            # Extract photo url and add it to list
             pic = str(media.img['src']).strip(':small')
             photos.append(pic)
 
