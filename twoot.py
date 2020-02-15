@@ -25,7 +25,7 @@ import random
 import requests
 from bs4 import BeautifulSoup, element
 import sqlite3
-import time
+import datetime, time
 import re
 from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalArgumentError
 
@@ -73,6 +73,10 @@ def cleanup_tweet_text(tt_iter):
                             tweet_text += ' '
                         # Add full url
                         tweet_text += tag['data-expanded-url']
+                    if tag.has_attr('data-expanded-path'):
+                        data_expanded_path = tag['data-expanded-path']
+                        if 'video' in data_expanded_path:
+                            tweet_text += '\n\n[Video embedded in original tweet]'
 
         # If element is hashflag (hashtag + icon), handle as simple hashtag
         elif tag.name == 'span' and tag['class'][0] == 'twitter-hashflag-container':
@@ -104,6 +108,19 @@ def cleanup_tweet_text(tt_iter):
 
     return tweet_text
 
+
+def contains_class(body_classes, some_class):
+    '''
+    :param body_classes: list of classes to search
+    :param some_class: class that we are interested in
+    :return: True if found, false otherwise
+    '''
+    found = False
+    for body_class in body_classes:
+        if body_class == some_class:
+            found = True
+
+    return found
 
 def main(argv):
 
@@ -147,6 +164,10 @@ def main(argv):
     # Download twitter page of user. We should get a 'no javascript' landing page and some cookies
     no_js_page = requests.get(url, headers=headers)
 
+    # Verify that download worked
+    assert no_js_page.status_code == 200,\
+        'The twitter page did not download correctly. Aborting'
+
     # DEBUG: Save page to file
     of = open('no_js_page.html', 'w')
     of.write(no_js_page.text)
@@ -167,62 +188,72 @@ def main(argv):
 
     twit_account_page = requests.post('https://mobile.twitter.com/i/nojs_router?path=%2F' + twit_account, headers=headers, cookies=no_js_page.cookies)
 
+    # Verify that download worked
+    assert twit_account_page.status_code == 200,\
+        'The twitter page did not download correctly. Aborting'
+
     # DEBUG: Save page to file
     of = open(twit_account + '.html', 'w')
     of.write(twit_account_page.text)
     of.close()
 
-    # Verify that download worked
-    assert twit_account_page.status_code == 200,\
-        'The twitter page did not download correctly. Aborting'
+    # Make soup
+    soup = BeautifulSoup(twit_account_page.text, 'html.parser')
 
     # Verify that we now have the correct twitter page
-    soup = BeautifulSoup(twit_account_page.text, 'html.parser')
-    assert twit_account.lower() in str(soup.head.title.string).lower(),\
+    body_classes = soup.body.get_attribute_list('class')
+    assert contains_class(body_classes, 'users-show-page'), \
         'This is not the correct twitter page. Quitting'
 
     # Extract twitter timeline
     timeline = soup.find_all('table', class_='tweet')
 
     for status in timeline:
+        # Extract tweet id
+        tweet_id = str(status['href']).strip('?p=v')
+
         # Extract url of full status page
-        full_status_url = 'https://mobile.twitter.com' + status['href']
+        full_status_url = 'https://mobile.twitter.com' + tweet_id
 
         # fetch full status page
         full_status_page = requests.get(full_status_url, cookies=twit_account_page.cookies)
-        # For some funny reason the command above only works if I don't provide headers
-        # If I do, I get the no_js page...
+        # FIXME: For some funny reason the command above only works if I don't provide headers. If I do, I get the no_js page...
+
+        # Verify that download worked
+        assert twit_account_page.status_code == 200, \
+            'The twitter page did not download correctly. Aborting'
 
         # DEBUG: Save page to file
         of = open('full_status_page.html', 'w')
         of.write(full_status_page.text)
         of.close()
-        sys.exit(1)
 
-        # Extract tweet id
-        tweet_id = str(status['href']).strip('?p=v')
+        # Make soup
+        soup = BeautifulSoup(full_status_page.text, 'html.parser')
 
-        # Isolate tweet header
-        sih = status.find('tr', class_='tweet-header')
+        # Verify that we now have the correct twitter page
+        body_classes = soup.body.get_attribute_list('class')
+        assert contains_class(body_classes, 'tweets-show-page'), \
+            'This is not the correct twitter page. Quitting'
+
+        # Isolate table main-tweet
+        tmt = soup.find('table', class_='main-tweet')
+
+        # Extract avatar
+        author_logo_url = tmt.find('td', class_='avatar').a.img['src']
 
         # extract author
-        author = sih.find('strong', class_='fullname').get_text()
-
-        # Extract author's logo
-        author_logo_url = sih.find('img', alt=author)['src']
-
-        # TODO: Extract time stamp by following link under td.timestamp
-        import datetime
-        timestamp = datetime.datetime.now().timestamp()
+        author = tmt.find('div', class_='fullname').a.strong.get_text()
 
         # Extract user name
-        author_account = str(sih.find('div', class_='username').span.next_sibling).strip('\n ')
+        author_account = str(tmt.find('span', class_='username').span.next_sibling).strip('\n ')
 
-        # Isolate tweet text container
-        ttc = status.find('tr', class_='tweet-container')
+        # TODO: Extract time stamp
+        time_string = tmt.find('div', class_='metadata').a.get_text()
+        timestamp = datetime.datetime.strptime(time_string, '%I:%M %p - %d %b %Y').timestamp()
 
         # extract iterator over tweet text contents
-        tt_iter = ttc.find('div', class_='dir-ltr').children
+        tt_iter = tmt.find('div', class_='tweet-text').div.children
 
         tweet_text = cleanup_tweet_text(tt_iter)
 
@@ -233,21 +264,15 @@ def main(argv):
         # Add footer with link to original tweet
         tweet_text += '\n\nOriginal tweet : https://twitter.com/' + tweet_id
 
-        # Isolate attached media container
-        amoc = status.find('div', class_='AdaptiveMediaOuterContainer')
+        # DEBUG: STOP HERE
+        #sys.exit(1)
 
-        photos = []
-        if amoc:
-            # Extract photos
-            photo_conts = amoc.find_all('div', class_='AdaptiveMedia-photoContainer')
-            for p in photo_conts:
-                photos.append(p['data-image-url'])
-        # Extract tweet id
-        tweet_id = ttc.find('div', class_='tweet-text')['data-id']
-        # Mention presence of videos in tweet
-        videos = amoc.find_all('div', class_='AdaptiveMedia-videoContainer')
-        if len(videos) != 0:
-            tweet_text += '\n\n[Video embedded in original tweet]'
+        photos = []  # The no_js version of twitter only shows one photo
+
+        media = tmt.find('div', class_='media')
+        if media:
+            pic = str(media.img['src']).strip(':small')
+            photos.append(pic)
 
         # If no media was specifically added in the tweet, try to get the first picture
         # with "twitter:image" meta tag in first linked page in tweet text
