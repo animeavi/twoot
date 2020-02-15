@@ -4,6 +4,10 @@ that broke when Twitter refreshed their web UI in July 2019.
 
 Instead twoot is self contained and handles all the processing.  
 
+UPDATE 15 FEB 2020: Twoot has been rewritten to make use of the
+mobile twitter page without JavaScript after the breaking change
+of last week.
+
 # Features
 
 * Fetch timeline of given users from twitter.com
