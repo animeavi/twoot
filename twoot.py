@@ -248,7 +248,7 @@ def main(argv):
         # Extract user name
         author_account = str(tmt.find('span', class_='username').span.next_sibling).strip('\n ')
 
-        # TODO: Extract time stamp
+        # Extract time stamp
         time_string = tmt.find('div', class_='metadata').a.get_text()
         timestamp = datetime.datetime.strptime(time_string, '%I:%M %p - %d %b %Y').timestamp()
 
@@ -262,10 +262,7 @@ def main(argv):
             tweet_text = 'RT from ' + author + '(@' + author_account + '\n\n)' + tweet_text
 
         # Add footer with link to original tweet
-        tweet_text += '\n\nOriginal tweet : https://twitter.com/' + tweet_id
-
-        # DEBUG: STOP HERE
-        #sys.exit(1)
+        tweet_text += '\n\nOriginal tweet : https://twitter.com' + tweet_id
 
         photos = []  # The no_js version of twitter only shows one photo
 
