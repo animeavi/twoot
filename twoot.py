@@ -259,7 +259,7 @@ def main(argv):
 
         # Check it the tweet is a retweet from somebody else
         if author_account.lower() != twit_account.lower():
-            tweet_text = 'RT from ' + author + '(@' + author_account + '\n\n)' + tweet_text
+            tweet_text = 'RT from ' + author + ' (@' + author_account + ')\n\n' + tweet_text
 
         # Add footer with link to original tweet
         tweet_text += '\n\nOriginal tweet : https://twitter.com' + tweet_id
