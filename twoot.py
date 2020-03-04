@@ -224,9 +224,9 @@ def main(argv):
             'The twitter page did not download correctly. Aborting'
 
         # DEBUG: Save page to file
-        #of = open('full_status_page.html', 'w')
-        #of.write(full_status_page.text)
-        #of.close()
+        # of = open('full_status_page.html', 'w')
+        # of.write(full_status_page.text)
+        # of.close()
 
         # Make soup
         soup = BeautifulSoup(full_status_page.text, 'html.parser')
@@ -235,6 +235,41 @@ def main(argv):
         body_classes = soup.body.get_attribute_list('class')
         assert contains_class(body_classes, 'tweets-show-page'), \
             'This is not the correct twitter page. Quitting'
+
+        # Check if tweet contains pic censored as "offensive media"
+        if soup.find('div', class_='accept-data') is not None:
+            print('Censored pic found')
+
+            # TODO if it does, submit form to obtain uncensored tweet
+            # Submit POST form response with cookies
+            headers.update(
+                {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Referer': full_status_url + '?p=v',
+                }
+            )
+
+            # Data payload for POST request
+            authenticity_token = soup.find('input', {'name': 'authenticity_token'}).get('value')
+            form_input = {'show_media': 1, 'authenticity_token': authenticity_token, 'commit': 'Display media'}
+
+            print(full_status_url)
+            print(headers)
+            print(form_input)
+            print(full_status_page.cookies)
+
+            full_status_page = requests.post(full_status_url + '?p=v', data=form_input, headers=headers, cookies=full_status_page.cookies)
+
+            # Verify that download worked
+            assert twit_account_page.status_code == 200, \
+                'The twitter page did not download correctly. Aborting'
+
+            # DEBUG: Save page to file
+            of = open('full_status_page.html', 'w')
+            of.write(full_status_page.text)
+            of.close()
+
+            sys.exit(-1)
 
         # Isolate table main-tweet
         tmt = soup.find('table', class_='main-tweet')
