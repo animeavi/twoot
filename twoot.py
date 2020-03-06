@@ -32,13 +32,53 @@ from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalA
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
 USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:54.0) Gecko/20100101 Firefox/69.0',
+    'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:54.0) Gecko/20100101 Firefox/73.0',
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13 Safari/605.1.15',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36 Edg/44.18362.329.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; Xbox; Xbox One) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36 Edge/44.18363.8131',
     ]
 
 #TODO log to file
 
+
+def handle_no_js(session, page, headers):
+    """
+    Check if page is a "No Javascript" page instead of the content that we wanted
+    If it is, submit the form on the page as POST request to get the correct page and return it
+    :param session: current requests session
+    :param page: Response object to check
+    :param headers: HTTP headers used in initial request
+    :return: correct page (Response object)
+    """
+    # DEBUG: Save page to file
+    #of = open('no_js_page.html', 'w')
+    #of.write(page.text)
+    #of.close()
+
+    # Set default return value
+    new_page = page
+
+    # Make soup
+    soup = BeautifulSoup(page.text, 'html.parser')
+
+    if soup.form.p is not None:
+        if 'JavaScript is disabled' in str(soup.form.p.string):
+            # Submit POST form response with cookies
+            headers.update(
+                {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Referer': page.request.url,
+                }
+            )
+
+            action = soup.form.get('action')
+
+            # Submit the form
+            new_page = session.post(action, headers=headers, cookies=page.cookies)
+
+            # Verify that download worked
+            assert (new_page.status_code == 200), 'The twitter page did not download correctly. Aborting'
+
+    return new_page
 
 def cleanup_tweet_text(tt_iter):
     '''
@@ -150,6 +190,9 @@ def main(argv):
     # To store content of all tweets from this user
     tweets = []
 
+    # Initiate session
+    session = requests.Session()
+
     # Get a copy of the default headers that requests would use
     headers = requests.utils.default_headers()
 
@@ -162,35 +205,14 @@ def main(argv):
 
     url = 'https://mobile.twitter.com/' + twit_account
     # Download twitter page of user. We should get a 'no javascript' landing page and some cookies
-    no_js_page = requests.get(url, headers=headers)
-
-    # Verify that download worked
-    assert no_js_page.status_code == 200,\
-        'The twitter page did not download correctly. Aborting'
-
-    # DEBUG: Save page to file
-    #of = open('no_js_page.html', 'w')
-    #of.write(no_js_page.text)
-    #of.close()
-
-    # Verify that this is the no_js page that we expected
-    soup = BeautifulSoup(no_js_page.text, 'html.parser')
-    assert 'JavaScript is disabled' in str(soup.form.p.string),\
-        'this is not the no_js page we expected. Quitting'
-
-    # Submit POST form response with cookies
-    headers.update(
-        {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Referer': url,
-        }
-    )
-
-    twit_account_page = requests.post('https://mobile.twitter.com/i/nojs_router?path=%2F' + twit_account, headers=headers, cookies=no_js_page.cookies)
+    twit_account_page = session.get(url, headers=headers)
 
     # Verify that download worked
     assert twit_account_page.status_code == 200,\
         'The twitter page did not download correctly. Aborting'
+
+    # If we got a No Javascript page, download the correct page
+    twit_account_page = handle_no_js(session, twit_account_page, headers)
 
     # DEBUG: Save page to file
     #of = open(twit_account + '.html', 'w')
@@ -213,15 +235,17 @@ def main(argv):
         tweet_id = str(status['href']).strip('?p=v')
 
         # Extract url of full status page
-        full_status_url = 'https://mobile.twitter.com' + tweet_id
+        full_status_url = 'https://mobile.twitter.com' + tweet_id + '?p=v'
 
         # fetch full status page
-        full_status_page = requests.get(full_status_url, cookies=twit_account_page.cookies)
-        # FIXME: For some funny reason the command above only works if I don't provide headers. If I do, I get the no_js page...
+        full_status_page = session.get(full_status_url, headers=headers)
 
         # Verify that download worked
-        assert twit_account_page.status_code == 200, \
+        assert full_status_page.status_code == 200, \
             'The twitter page did not download correctly. Aborting'
+
+        # If we got a No Javascript page, download the correct page
+        full_status_page = handle_no_js(session, full_status_page, headers)
 
         # DEBUG: Save page to file
         #of = open('full_status_page.html', 'w')
@@ -235,6 +259,37 @@ def main(argv):
         body_classes = soup.body.get_attribute_list('class')
         assert contains_class(body_classes, 'tweets-show-page'), \
             'This is not the correct twitter page. Quitting'
+
+        # Check if tweet contains pic censored as "Sensitive material"
+        if soup.find('div', class_='accept-data') is not None:
+            # If it does, submit form to obtain uncensored tweet
+            # Submit POST form response with cookies
+            headers.update(
+                {
+                    'Origin': 'https://mobile.twitter.com',
+                    'Host': 'mobile.twitter.com',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Referer': full_status_url,
+                }
+            )
+
+            # Data payload for POST request
+            authenticity_token = soup.find('input', {'name': 'authenticity_token'}).get('value')
+            form_input = {'show_media': 1, 'authenticity_token': authenticity_token, 'commit': 'Display media'}
+
+            full_status_page = session.post(full_status_url + '?p=v', data=form_input, headers=headers)
+
+            # Verify that download worked
+            assert full_status_page.status_code == 200, \
+                'The twitter page did not download correctly. Aborting'
+
+            # DEBUG: Save page to file
+            #of = open('full_status_page_uncensored.html', 'w')
+            #of.write(full_status_page.text)
+            #of.close()
+
+            # Remake soup
+            soup = BeautifulSoup(full_status_page.text, 'html.parser')
 
         # Isolate table main-tweet
         tmt = soup.find('table', class_='main-tweet')
@@ -306,8 +361,8 @@ def main(argv):
         tweets.append(tweet)
 
     # DEBUG: Print extracted tweets
-    # for t in tweets:
-    #     print(t)
+    for t in tweets:
+         print(t)
 
     # **********************************************************
     # Iterate tweets. Check if the tweet has already been posted
