@@ -50,9 +50,9 @@ def handle_no_js(session, page, headers):
     :return: correct page (Response object)
     """
     # DEBUG: Save page to file
-    of = open('no_js_page.html', 'w')
-    of.write(page.text)
-    of.close()
+    #of = open('no_js_page.html', 'w')
+    #of.write(page.text)
+    #of.close()
 
     # Set default return value
     new_page = page
@@ -215,9 +215,9 @@ def main(argv):
     twit_account_page = handle_no_js(session, twit_account_page, headers)
 
     # DEBUG: Save page to file
-    of = open(twit_account + '.html', 'w')
-    of.write(twit_account_page.text)
-    of.close()
+    #of = open(twit_account + '.html', 'w')
+    #of.write(twit_account_page.text)
+    #of.close()
 
     # Make soup
     soup = BeautifulSoup(twit_account_page.text, 'html.parser')
@@ -248,9 +248,9 @@ def main(argv):
         full_status_page = handle_no_js(session, full_status_page, headers)
 
         # DEBUG: Save page to file
-        of = open('full_status_page.html', 'w')
-        of.write(full_status_page.text)
-        of.close()
+        #of = open('full_status_page.html', 'w')
+        #of.write(full_status_page.text)
+        #of.close()
 
         # Make soup
         soup = BeautifulSoup(full_status_page.text, 'html.parser')
@@ -284,9 +284,9 @@ def main(argv):
                 'The twitter page did not download correctly. Aborting'
 
             # DEBUG: Save page to file
-            of = open('full_status_page_uncensored.html', 'w')
-            of.write(full_status_page.text)
-            of.close()
+            #of = open('full_status_page_uncensored.html', 'w')
+            #of.write(full_status_page.text)
+            #of.close()
 
             # Remake soup
             soup = BeautifulSoup(full_status_page.text, 'html.parser')
