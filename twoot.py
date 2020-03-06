@@ -361,8 +361,8 @@ def main(argv):
         tweets.append(tweet)
 
     # DEBUG: Print extracted tweets
-    for t in tweets:
-         print(t)
+    #for t in tweets:
+    #     print(t)
 
     # **********************************************************
     # Iterate tweets. Check if the tweet has already been posted

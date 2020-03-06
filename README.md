@@ -4,10 +4,10 @@ that broke when Twitter refreshed their web UI in July 2019.
 
 Instead twoot is self contained and handles all the processing.  
 
-UPDATE 06 MAR 2020: Added functionality to automatically get images
+**UPDATE 06 MAR 2020**  Added functionality to automatically get images
 from tweets considered as "sensitive content"
 
-UPDATE 15 FEB 2020: Twoot has been rewritten to make use of the
+**UPDATE 15 FEB 2020**  Twoot has been rewritten to make use of the
 mobile twitter page without JavaScript after the breaking change
 of last week.
 
