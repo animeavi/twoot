@@ -170,6 +170,7 @@ def main(argv):
     parser.add_argument('-i', metavar='<mastodon instance>', action='store', required=True)
     parser.add_argument('-m', metavar='<mastodon account>', action='store', required=True)
     parser.add_argument('-p', metavar='<mastodon password>', action='store', required=True)
+    parser.add_argument('-r', action='store_true')
     parser.add_argument('-a', metavar='<max age in days>', action='store', type=float, default=1)
     parser.add_argument('-d', metavar='<min delay in mins>', action='store', type=float, default=0)
 
@@ -180,6 +181,7 @@ def main(argv):
     mast_instance = args['i']
     mast_account = args['m']
     mast_password = args['p']
+    tweets_and_replies = args['r']
     max_age = float(args['a'])
     min_delay = float(args['d'])
 
@@ -231,6 +233,19 @@ def main(argv):
     timeline = soup.find_all('table', class_='tweet')
 
     for status in timeline:
+
+        reply_to_username = None
+        # Check if the tweet is a reply-to
+        reply_to_div = status.find('div', class_='tweet-reply-context username')
+        if reply_to_div is not None:
+            # Do we need to handle reply-to tweets?
+            if tweets_and_replies:
+                # Capture user name being replied to
+                reply_to_username = reply_to_div.a.get_text()
+            else:
+                # Skip this tweet
+                continue
+
         # Extract tweet id
         tweet_id = str(status['href']).strip('?p=v')
 
@@ -311,6 +326,10 @@ def main(argv):
         tt_iter = tmt.find('div', class_='tweet-text').div.children
 
         tweet_text = cleanup_tweet_text(tt_iter)
+
+        # Mention if the tweet is a reply-to
+        if reply_to_username is not None:
+            tweet_text = 'In reply to ' + reply_to_username + '\n\n' + tweet_text
 
         # Check it the tweet is a retweet from somebody else
         if author_account.lower() != twit_account.lower():
