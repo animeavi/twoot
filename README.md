@@ -4,6 +4,10 @@ that broke when Twitter refreshed their web UI in July 2019.
 
 Instead twoot is self contained and handles all the processing.  
 
+**UPDATE 17 MAR 2020** Added command line switch (`-r`) to also post
+reply-to tweets on the mastodon account. They will not be included by
+default anymore.
+
 **UPDATE 06 MAR 2020**  Added functionality to automatically get images
 from tweets considered as "sensitive content"
 
@@ -20,13 +24,14 @@ of last week.
 * Specify maximum age of tweet to be considered
 * Specify minimum delay before considering a tweet for upload
 * Remember tweets already tooted to prevent double posting
+* Can optionally post post reply-to tweets on the mastodon account
 
 # usage
 
 ```
 twoot.py [-h] -t <twitter account> -i <mastodon instance> -m <mastodon
-                account> -p <mastodon password> [-a <max age in days>]
-                [-d <min delay in mins>]
+                account> -p <mastodon password> [-r]
+                [-a <max age in days>] [-d <min delay in mins>]
 ```
 
 # arguments
@@ -40,6 +45,7 @@ is @superduperbot@botsin.space
 | -i    | Mastodon instance domain name                    | `botsin.space`     | Yes |
 | -m    | Mastodon username                                | `superduperbot`    | Yes |
 | -p    | Mastodon password                                | `my_Sup3r-S4f3*pw` | Yes |
+| -r    | Post reply-to tweets (ignored by default)        | *N/A*              | No  |
 | -a    | Max. age of tweet to post (in days)              | `1`                | No  |
 | -d    | Min. delay before posting new tweet (in minutes) | `15`               | No  |
 
@@ -51,7 +57,7 @@ Default min delay is 0 minutes.
 
 Make sure python3 is installed.
 
-Twoot depends on sqlite3, beautifulsoup4 and mastodon python module: `sudo pip install beautifulsoup4 Mastodon.py`
+Twoot depends on beautifulsoup4 and mastodon python module: `sudo pip install beautifulsoup4 Mastodon.py`
 
 In your user folder, execute `git clone https://gitlab.com/jeancf/twoot.git`
 to clone repo with twoot.py script.
