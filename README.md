@@ -24,7 +24,7 @@ of last week.
 * Specify maximum age of tweet to be considered
 * Specify minimum delay before considering a tweet for upload
 * Remember tweets already tooted to prevent double posting
-* Can optionally post post reply-to tweets on the mastodon account
+* Can optionally post reply-to tweets on the mastodon account
 
 # usage
 
