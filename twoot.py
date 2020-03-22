@@ -116,6 +116,7 @@ def cleanup_tweet_text(tt_iter):
                     if tag.has_attr('data-expanded-path'):
                         data_expanded_path = tag['data-expanded-path']
                         if 'video' in data_expanded_path:
+                            # TODO  Optionally download video from twitter and upload to mastodon
                             tweet_text += '\n\n[Video embedded in original tweet]'
 
         # If element is hashflag (hashtag + icon), handle as simple hashtag
