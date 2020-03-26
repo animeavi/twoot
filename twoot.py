@@ -84,7 +84,7 @@ def handle_no_js(session, page, headers):
 
     return new_page
 
-def cleanup_tweet_text(tt_iter):
+def cleanup_tweet_text(tt_iter, get_vids):
     '''
     Receives an iterator over all the elements contained in the tweet-text container.
     Processes them to remove Twitter-specific stuff and make them suitable for
@@ -120,15 +120,17 @@ def cleanup_tweet_text(tt_iter):
                     if tag.has_attr('data-expanded-path'):
                         data_expanded_path = tag['data-expanded-path']
                         if 'video' in data_expanded_path:
-                            # Download video from twitter and store in filesystem
-                            tweet_uri = "https://twitter.com/" + data_expanded_path.strip("/video/1")
-                            twitter_dl = twitterdl.TwitterDownloader(tweet_uri, target_width=500, debug=1)
-                            try:
-                                twitter_dl.download()
-                            except json.JSONDecodeError:
-                                print("ERROR: Could not get playlist")
-
-                            tweet_text += '\n\n[Video embedded in original tweet]'
+                            if get_vids:
+                                # Download video from twitter and store in filesystem
+                                tweet_uri = "https://twitter.com/" + data_expanded_path.strip("/video/1")
+                                twitter_dl = twitterdl.TwitterDownloader(tweet_uri, target_width=500, debug=1)
+                                try:
+                                    twitter_dl.download()
+                                except json.JSONDecodeError:
+                                    print("ERROR: Could not get playlist")
+                                    tweet_text += '\n\n[Video embedded in original tweet]'
+                            else:
+                                tweet_text += '\n\n[Video embedded in original tweet]'
 
         # If element is hashflag (hashtag + icon), handle as simple hashtag
         elif tag.name == 'span' and tag['class'][0] == 'twitter-hashflag-container':
@@ -177,15 +179,15 @@ def contains_class(body_classes, some_class):
 def main(argv):
 
     # Build parser for command line arguments
-    # TODO  Add option for ingestion of video content
     parser = argparse.ArgumentParser(description='toot tweets.')
     parser.add_argument('-t', metavar='<twitter account>', action='store', required=True)
     parser.add_argument('-i', metavar='<mastodon instance>', action='store', required=True)
     parser.add_argument('-m', metavar='<mastodon account>', action='store', required=True)
     parser.add_argument('-p', metavar='<mastodon password>', action='store', required=True)
-    parser.add_argument('-r', action='store_true')
-    parser.add_argument('-a', metavar='<max age in days>', action='store', type=float, default=1)
-    parser.add_argument('-d', metavar='<min delay in mins>', action='store', type=float, default=0)
+    parser.add_argument('-r', action='store_true', help='Also post replies to other tweets')
+    parser.add_argument('-v', action='store_true', help='Ingest twitter videos and upload to Mastodon instance')
+    parser.add_argument('-a', metavar='<max age (in days)>', action='store', type=float, default=1)
+    parser.add_argument('-d', metavar='<min delay (in mins)>', action='store', type=float, default=0)
 
     # Parse command line
     args = vars(parser.parse_args())
@@ -195,6 +197,7 @@ def main(argv):
     mast_account = args['m']
     mast_password = args['p']
     tweets_and_replies = args['r']
+    get_vids = args['v']
     max_age = float(args['a'])
     min_delay = float(args['d'])
 
@@ -338,7 +341,7 @@ def main(argv):
         # extract iterator over tweet text contents
         tt_iter = tmt.find('div', class_='tweet-text').div.children
 
-        tweet_text = cleanup_tweet_text(tt_iter)
+        tweet_text = cleanup_tweet_text(tt_iter, get_vids)
 
         # Mention if the tweet is a reply-to
         if reply_to_username is not None:
@@ -521,6 +524,7 @@ def main(argv):
                        (twit_account, mast_instance, mast_account, tweet['tweet_id'], toot['id']))
             sql.commit()
 
+    # TODO  Cleanup downloaded video files
 
 if __name__ == "__main__":
     main(sys.argv)
