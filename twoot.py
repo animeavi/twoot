@@ -27,10 +27,11 @@ from bs4 import BeautifulSoup, element
 import sqlite3
 import datetime, time
 import re
+from pathlib import Path
 from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalArgumentError
-
 import twitterdl
 import json.decoder
+
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
 USER_AGENTS = [
@@ -119,7 +120,7 @@ def cleanup_tweet_text(tt_iter):
                     if tag.has_attr('data-expanded-path'):
                         data_expanded_path = tag['data-expanded-path']
                         if 'video' in data_expanded_path:
-                            # TODO  Optionally download video from twitter and upload to mastodon
+                            # Download video from twitter and store in filesystem
                             tweet_uri = "https://twitter.com/" + data_expanded_path.strip("/video/1")
                             twitter_dl = twitterdl.TwitterDownloader(tweet_uri, target_width=500, debug=1)
                             try:
@@ -378,6 +379,15 @@ def main(argv):
                         requests.exceptions.TooManyRedirects):
                     pass
 
+        # Check if video was downloaded
+        sid = re.search('/([0-9]+)$', tweet_id)
+        status_id = sid.groups()[0]
+        video_path = Path('./output') / author_account / status_id
+        video_file_list = list(video_path.glob('*.mp4'))
+        video_file = None
+        if len(video_file_list) != 0:
+            video_file = video_file_list[0].absolute().as_posix()
+
         # Add dictionary with content of tweet to list
         tweet = {
             "author": author,
@@ -386,6 +396,7 @@ def main(argv):
             "timestamp": timestamp,
             "tweet_id": tweet_id,
             "tweet_text": tweet_text,
+            "video": video_file,
             "photos": photos,
         }
         tweets.append(tweet)
