@@ -177,6 +177,7 @@ def contains_class(body_classes, some_class):
 def main(argv):
 
     # Build parser for command line arguments
+    # TODO  Add option for ingestion of video content
     parser = argparse.ArgumentParser(description='toot tweets.')
     parser.add_argument('-t', metavar='<twitter account>', action='store', required=True)
     parser.add_argument('-i', metavar='<mastodon instance>', action='store', required=True)
@@ -450,6 +451,7 @@ def main(argv):
     # Upload tweets
     for tweet in reversed(tweets):
         # Check in database if tweet has already been posted
+        # FIXME  Move tests to the front of the process to avoid the unnecessary processing of already ingested tweets
         db.execute('''SELECT * FROM toots WHERE twitter_account = ? AND mastodon_instance  = ? AND
                    mastodon_account = ? AND tweet_id = ?''',
                    (twit_account, mast_instance, mast_account, tweet['tweet_id']))
@@ -475,7 +477,7 @@ def main(argv):
             # Download picture
             try:
                 media = requests.get(photo)
-            except:
+            except:  # Picture cannot be downloaded for any reason
                 pass
 
             # Upload picture to Mastodon instance
