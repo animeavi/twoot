@@ -470,23 +470,33 @@ def main(argv):
             # Skip to next tweet
             continue
 
-        # Upload photos
         media_ids = []
-        for photo in tweet['photos']:
-            media = False
-            # Download picture
+
+        # Upload video if there is one
+        if tweet['video'] is not None:
             try:
-                media = requests.get(photo)
-            except:  # Picture cannot be downloaded for any reason
+                media_posted = mastodon.media_post(tweet['video'])
+                media_ids.append(media_posted['id'])
+            except (MastodonAPIError, MastodonIllegalArgumentError, TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
                 pass
 
-            # Upload picture to Mastodon instance
-            if media:
+        else:  # Only upload pic if no video was uploaded
+            # Upload photos
+            for photo in tweet['photos']:
+                media = False
+                # Download picture
                 try:
-                    media_posted = mastodon.media_post(media.content, mime_type=media.headers['content-type'])
-                    media_ids.append(media_posted['id'])
-                except (MastodonAPIError, MastodonIllegalArgumentError, TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
+                    media = requests.get(photo)
+                except:  # Picture cannot be downloaded for any reason
                     pass
+
+                # Upload picture to Mastodon instance
+                if media:
+                    try:
+                        media_posted = mastodon.media_post(media.content, mime_type=media.headers['content-type'])
+                        media_ids.append(media_posted['id'])
+                    except (MastodonAPIError, MastodonIllegalArgumentError, TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
+                        pass
 
         # Post toot
         try:
