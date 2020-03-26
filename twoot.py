@@ -30,6 +30,7 @@ import re
 from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalArgumentError
 
 import twitterdl
+import json.decoder
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
 USER_AGENTS = [
@@ -119,6 +120,13 @@ def cleanup_tweet_text(tt_iter):
                         data_expanded_path = tag['data-expanded-path']
                         if 'video' in data_expanded_path:
                             # TODO  Optionally download video from twitter and upload to mastodon
+                            tweet_uri = "https://twitter.com/" + data_expanded_path.strip("/video/1")
+                            twitter_dl = twitterdl.TwitterDownloader(tweet_uri, target_width=500, debug=1)
+                            try:
+                                twitter_dl.download()
+                            except json.JSONDecodeError:
+                                print("ERROR: Could not get playlist")
+
                             tweet_text += '\n\n[Video embedded in original tweet]'
 
         # If element is hashflag (hashtag + icon), handle as simple hashtag
