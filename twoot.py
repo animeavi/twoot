@@ -31,6 +31,7 @@ from pathlib import Path
 from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalArgumentError
 import twitterdl
 import json.decoder
+import shutil
 
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
@@ -123,6 +124,7 @@ def cleanup_tweet_text(tt_iter, get_vids):
                             if get_vids:
                                 # Download video from twitter and store in filesystem
                                 tweet_uri = "https://twitter.com/" + data_expanded_path.strip("/video/1")
+                                # FIXME  Use specific directory for downloading videos (that can be easily deleted)
                                 twitter_dl = twitterdl.TwitterDownloader(tweet_uri, target_width=500, debug=1)
                                 try:
                                     twitter_dl.download()
