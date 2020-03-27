@@ -246,8 +246,10 @@ def main(argv):
 
     # Verify that we now have the correct twitter page
     body_classes = soup.body.get_attribute_list('class')
-    assert contains_class(body_classes, 'users-show-page'), \
-        'This is not the correct twitter page. Quitting'
+    assert contains_class(body_classes, 'users-show-page'), 'This is not the correct twitter page. Quitting'
+
+    # Replace twit_account with version with correct capitalization
+    twit_account = soup.find('span', class_='screen-name').get_text()
 
     # Extract twitter timeline
     timeline = soup.find_all('table', class_='tweet')
