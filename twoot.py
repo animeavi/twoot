@@ -85,11 +85,15 @@ def handle_no_js(session, page, headers):
 
     return new_page
 
-def cleanup_tweet_text(tt_iter, get_vids):
+
+def cleanup_tweet_text(tt_iter, tweet_uri, get_vids):
     '''
     Receives an iterator over all the elements contained in the tweet-text container.
     Processes them to remove Twitter-specific stuff and make them suitable for
     posting on Mastodon
+    :param tt_iter: iterator over the HTML elements in the text of the tweet
+    :param tweet_uri: Used to downloaded videos
+    :param get_vids:  True to download embedded twitter videos and save them on the filesystem
     '''
     tweet_text = ''
     # Iterate elements
@@ -123,8 +127,6 @@ def cleanup_tweet_text(tt_iter, get_vids):
                         if 'video' in data_expanded_path:
                             if get_vids:
                                 # Download video from twitter and store in filesystem
-                                tweet_uri = "https://twitter.com/" + data_expanded_path.strip("/video/1")
-                                # FIXME  Use specific directory for downloading videos (that can be easily deleted)
                                 twitter_dl = twitterdl.TwitterDownloader(tweet_uri, target_width=500, debug=1)
                                 try:
                                     twitter_dl.download()
@@ -264,8 +266,9 @@ def main(argv):
                 # Skip this tweet
                 continue
 
-        # Extract tweet id
+        # Extract tweet ID and status ID
         tweet_id = str(status['href']).strip('?p=v')
+        status_id = tweet_id.split('/')[3]
 
         # Extract url of full status page
         full_status_url = 'https://mobile.twitter.com' + tweet_id + '?p=v'
@@ -310,7 +313,7 @@ def main(argv):
             authenticity_token = soup.find('input', {'name': 'authenticity_token'}).get('value')
             form_input = {'show_media': 1, 'authenticity_token': authenticity_token, 'commit': 'Display media'}
 
-            full_status_page = session.post(full_status_url + '?p=v', data=form_input, headers=headers)
+            full_status_page = session.post(full_status_url, data=form_input, headers=headers)
 
             # Verify that download worked
             assert full_status_page.status_code == 200, \
@@ -343,7 +346,7 @@ def main(argv):
         # extract iterator over tweet text contents
         tt_iter = tmt.find('div', class_='tweet-text').div.children
 
-        tweet_text = cleanup_tweet_text(tt_iter, get_vids)
+        tweet_text = cleanup_tweet_text(tt_iter, full_status_url, get_vids)
 
         # Mention if the tweet is a reply-to
         if reply_to_username is not None:
@@ -386,9 +389,7 @@ def main(argv):
                     pass
 
         # Check if video was downloaded
-        sid = re.search('/([0-9]+)$', tweet_id)
-        status_id = sid.groups()[0]
-        video_path = Path('./output') / author_account / status_id
+        video_path = Path('./output') / twit_account / status_id
         video_file_list = list(video_path.glob('*.mp4'))
         video_file = None
         if len(video_file_list) != 0:
@@ -526,7 +527,8 @@ def main(argv):
                        (twit_account, mast_instance, mast_account, tweet['tweet_id'], toot['id']))
             sql.commit()
 
-    # TODO  Cleanup downloaded video files
+    # Cleanup downloaded video files
+    shutil.rmtree('./output/' + twit_account)
 
 if __name__ == "__main__":
     main(sys.argv)
