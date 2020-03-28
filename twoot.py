@@ -127,6 +127,7 @@ def cleanup_tweet_text(tt_iter, tweet_uri, get_vids):
                         if 'video' in data_expanded_path:
                             if get_vids:
                                 # Download video from twitter and store in filesystem
+                                # TODO  set output location to ./output/twit_account
                                 twitter_dl = twitterdl.TwitterDownloader(tweet_uri, target_width=500, debug=0)
                                 try:
                                     twitter_dl.download()
@@ -407,6 +408,7 @@ def main(argv):
                     pass
 
         # Check if video was downloaded
+        # TODO  Check subdirectories of twit_account directory for video
         video_path = Path('./output') / twit_account / status_id
         video_file_list = list(video_path.glob('*.mp4'))
         video_file = None
