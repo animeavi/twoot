@@ -67,6 +67,8 @@ Make sure python3 is installed.
 Twoot depends on beautifulsoup4 and mastodon python module. It also
 requires m3u8 and ffmpeg-python.
 
+ffmpeg must also be installed.
+
     pip install beautifulsoup4 Mastodon.py m3u8 ffmpeg-python
 
 In your user folder, execute `git clone https://gitlab.com/jeancf/twoot.git`
