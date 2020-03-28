@@ -20,11 +20,12 @@ of last week.
 * Fetch timeline of given users from twitter.com
 * Scrape html and formats tweets for post on mastodon
 * Emojis supported
-* Upload images from tweet to Mastodon (videos not supported)
+* Optionally upload videos from tweet to Mastodon
+* Upload images from tweet to Mastodon
 * Specify maximum age of tweet to be considered
 * Specify minimum delay before considering a tweet for upload
 * Remember tweets already tooted to prevent double posting
-* Can optionally post reply-to tweets on the mastodon account
+* Optionally post reply-to tweets on the mastodon account
 
 # usage
 
@@ -45,9 +46,15 @@ is @superduperbot@botsin.space
 | -i    | Mastodon instance domain name                    | `botsin.space`     | Yes |
 | -m    | Mastodon username                                | `superduperbot`    | Yes |
 | -p    | Mastodon password                                | `my_Sup3r-S4f3*pw` | Yes |
+| -v    | upload videos to Mastodon                        | *N/A*              | No  |
 | -r    | Post reply-to tweets (ignored by default)        | *N/A*              | No  |
 | -a    | Max. age of tweet to post (in days)              | `1`                | No  |
 | -d    | Min. delay before posting new tweet (in minutes) | `15`               | No  |
+
+When using the `-v` switch consider:
+* The copyright of the content that you want to cross-post
+* The storage / transfer limitations of the Mastodon instance that you are posting to
+* The upstream bandwidth that you may consume on your internet connection
 
 Default max age is 1 day. Decimal values are OK.
 
