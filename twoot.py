@@ -128,7 +128,7 @@ def cleanup_tweet_text(tt_iter, tweet_uri, get_vids):
                             if get_vids:
                                 # Download video from twitter and store in filesystem
                                 # TODO  set output location to ./output/twit_account
-                                twitter_dl = twitterdl.TwitterDownloader(tweet_uri, target_width=500, debug=0)
+                                twitter_dl = twitterdl.TwitterDownloader(tweet_uri, target_width=500)
                                 try:
                                     twitter_dl.download()
                                 except json.JSONDecodeError:
