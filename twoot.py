@@ -205,6 +205,12 @@ def main(argv):
     max_age = float(args['a'])
     min_delay = float(args['d'])
 
+    # Try to open database. If it does not exist, create it
+    sql = sqlite3.connect('twoot.db')
+    db = sql.cursor()
+    db.execute('''CREATE TABLE IF NOT EXISTS toots (twitter_account TEXT, mastodon_instance TEXT,
+               mastodon_account TEXT, tweet_id TEXT, toot_id TEXT)''')
+
     # **********************************************************
     # Load twitter page of user. Process all tweets and generate
     # list of dictionaries ready to be posted on Mastodon
@@ -256,6 +262,20 @@ def main(argv):
 
     for status in timeline:
 
+        # Extract tweet ID and status ID
+        tweet_id = str(status['href']).strip('?p=v')
+        status_id = tweet_id.split('/')[3]
+
+        # Check in database if tweet has already been posted
+        db.execute('''SELECT * FROM toots WHERE twitter_account = ? AND mastodon_instance  = ? AND
+                   mastodon_account = ? AND tweet_id = ?''',
+                   (twit_account, mast_instance, mast_account, tweet_id))
+        tweet_in_db = db.fetchone()
+
+        if tweet_in_db is not None:
+            # Skip to next tweet
+            continue
+
         reply_to_username = None
         # Check if the tweet is a reply-to
         reply_to_div = status.find('div', class_='tweet-reply-context username')
@@ -267,10 +287,6 @@ def main(argv):
             else:
                 # Skip this tweet
                 continue
-
-        # Extract tweet ID and status ID
-        tweet_id = str(status['href']).strip('?p=v')
-        status_id = tweet_id.split('/')[3]
 
         # Extract url of full status page
         full_status_url = 'https://mobile.twitter.com' + tweet_id + '?p=v'
@@ -415,15 +431,9 @@ def main(argv):
     #     print(t)
 
     # **********************************************************
-    # Iterate tweets. Check if the tweet has already been posted
-    # on Mastodon. If not, post it and add it to database
+    # Iterate tweets in list.
+    # post each on Mastodon and reference to it in database
     # **********************************************************
-
-    # Try to open database. If it does not exist, create it
-    sql = sqlite3.connect('twoot.db')
-    db = sql.cursor()
-    db.execute('''CREATE TABLE IF NOT EXISTS toots (twitter_account TEXT, mastodon_instance TEXT,
-               mastodon_account TEXT, tweet_id TEXT, toot_id TEXT)''')
 
     # Create Mastodon application if it does not exist yet
     if not os.path.isfile(mast_instance + '.secret'):
@@ -458,17 +468,6 @@ def main(argv):
 
     # Upload tweets
     for tweet in reversed(tweets):
-        # Check in database if tweet has already been posted
-        # FIXME  Move tests to the front of the process to avoid the unnecessary processing of already ingested tweets
-        db.execute('''SELECT * FROM toots WHERE twitter_account = ? AND mastodon_instance  = ? AND
-                   mastodon_account = ? AND tweet_id = ?''',
-                   (twit_account, mast_instance, mast_account, tweet['tweet_id']))
-        tweet_in_db = db.fetchone()
-
-        if tweet_in_db is not None:
-            # Skip to next tweet
-            continue
-
         # Check that the tweet is not too young (might be deleted) or too old
         age_in_hours = (time.time() - float(tweet['timestamp'])) / 3600.0
         min_delay_in_hours = min_delay / 60.0
