@@ -529,7 +529,10 @@ def main(argv):
             sql.commit()
 
     # Cleanup downloaded video files
-    shutil.rmtree('./output/' + twit_account)
+    try:
+        shutil.rmtree('./output/' + twit_account)
+    except FileNotFoundError:  # The directory does not exist
+        pass
 
 if __name__ == "__main__":
     main(sys.argv)
