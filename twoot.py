@@ -86,14 +86,16 @@ def handle_no_js(session, page, headers):
     return new_page
 
 
-def cleanup_tweet_text(tt_iter, tweet_uri, get_vids):
+def cleanup_tweet_text(tt_iter, twit_account, status_id, tweet_uri, get_vids):
     '''
     Receives an iterator over all the elements contained in the tweet-text container.
     Processes them to remove Twitter-specific stuff and make them suitable for
     posting on Mastodon
     :param tt_iter: iterator over the HTML elements in the text of the tweet
+    :param twit_account: Used to name directory where videos are downloaded
+    :param status_id: Used to name directory where videos are downloaded
     :param tweet_uri: Used to downloaded videos
-    :param get_vids:  True to download embedded twitter videos and save them on the filesystem
+    :param get_vids: True to download embedded twitter videos and save them on the filesystem
     '''
     tweet_text = ''
     # Iterate elements
@@ -129,8 +131,11 @@ def cleanup_tweet_text(tt_iter, tweet_uri, get_vids):
                                 # Download video from twitter and store in filesystem. Running as subprocess to avoid
                                 # requirement to install ffmpeg and ffmpeg-python for those that do not want to post videos
                                 try:
-                                    # TODO  set output location to ./output/twit_account
-                                    dl_feedback = subprocess.run(["./twitterdl.py", tweet_uri, "-w 500"], capture_output=True)
+                                    # TODO  set output location to ./output/twit_account/status_id
+                                    dl_feedback = subprocess.run(
+                                        ["./twitterdl.py", tweet_uri, "-ooutput/" + twit_account + "/" + status_id, "-w 500"],
+                                        capture_output=True
+                                    )
                                     if dl_feedback.returncode != 0:
                                         # TODO  Log dl_feedback.stderr
                                         tweet_text += '\n\n[Video embedded in original tweet]'
@@ -368,7 +373,7 @@ def main(argv):
         # extract iterator over tweet text contents
         tt_iter = tmt.find('div', class_='tweet-text').div.children
 
-        tweet_text = cleanup_tweet_text(tt_iter, full_status_url, get_vids)
+        tweet_text = cleanup_tweet_text(tt_iter, twit_account, status_id, full_status_url, get_vids)
 
         # Mention if the tweet is a reply-to
         if reply_to_username is not None:
@@ -411,12 +416,19 @@ def main(argv):
                     pass
 
         # Check if video was downloaded
-        # TODO  Check subdirectories of twit_account directory for video
-        video_path = Path('./output') / twit_account / status_id
-        video_file_list = list(video_path.glob('*.mp4'))
         video_file = None
-        if len(video_file_list) != 0:
-            video_file = video_file_list[0].absolute().as_posix()
+
+        video_path = Path('./output') / twit_account / status_id
+        if video_path.exists():
+            # Take the first subdirectory of video path (named after original poster of video)
+            video_path = [p for p in video_path.iterdir() if p.is_dir()][0]
+            # Take again the first subdirectory of video path (named after status id of original post where vidoe is attached)
+            video_path = [p for p in video_path.iterdir() if p.is_dir()][0]
+            # list video files
+            video_file_list = list(video_path.glob('*.mp4'))
+            if len(video_file_list) != 0:
+                # Extract posix path of first video file in list
+                video_file = video_file_list[0].absolute().as_posix()
 
         # Add dictionary with content of tweet to list
         tweet = {
