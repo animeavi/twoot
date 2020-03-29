@@ -29,7 +29,7 @@ import datetime, time
 import re
 from pathlib import Path
 from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalArgumentError
-import twitterdl
+import subprocess
 import json.decoder
 import shutil
 
@@ -128,12 +128,14 @@ def cleanup_tweet_text(tt_iter, tweet_uri, get_vids):
                             if get_vids:
                                 # Download video from twitter and store in filesystem
                                 # TODO  set output location to ./output/twit_account
-                                twitter_dl = twitterdl.TwitterDownloader(tweet_uri, target_width=500)
                                 try:
-                                    twitter_dl.download()
-                                except json.JSONDecodeError:
-                                    print("ERROR: Could not get playlist")
-                                    tweet_text += '\n\n[Video embedded in original tweet]'
+                                    dl_feedback = subprocess.run(["./twitterdl.py", tweet_uri, "-w 500"], capture_output=True)
+                                    if dl_feedback.returncode != 0:
+                                        # TODO  Log dl_feedback.stderr
+                                        tweet_text += '\n\n[Video embedded in original tweet]'
+                                except OSError:
+                                    print("Could not execute twitterdl.py (is it there? Is it set as executable?)")
+                                    sys.exit(-1)
                             else:
                                 tweet_text += '\n\n[Video embedded in original tweet]'
 
