@@ -126,9 +126,10 @@ def cleanup_tweet_text(tt_iter, tweet_uri, get_vids):
                         data_expanded_path = tag['data-expanded-path']
                         if 'video' in data_expanded_path:
                             if get_vids:
-                                # Download video from twitter and store in filesystem
-                                # TODO  set output location to ./output/twit_account
+                                # Download video from twitter and store in filesystem. Running as subprocess to avoid
+                                # requirement to install ffmpeg and ffmpeg-python for those that do not want to post videos
                                 try:
+                                    # TODO  set output location to ./output/twit_account
                                     dl_feedback = subprocess.run(["./twitterdl.py", tweet_uri, "-w 500"], capture_output=True)
                                     if dl_feedback.returncode != 0:
                                         # TODO  Log dl_feedback.stderr

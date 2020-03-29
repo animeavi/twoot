@@ -31,7 +31,7 @@ of last week.
 
 ```
 twoot.py [-h] -t <twitter account> -i <mastodon instance> -m <mastodon
-                account> -p <mastodon password> [-r]
+                account> -p <mastodon password> [-r] [-v]
                 [-a <max age in days>] [-d <min delay in mins>]
 ```
 
@@ -42,19 +42,19 @@ is @superduperbot@botsin.space
 
 |Switch |Description                                       | Example            | Req |
 |-------|--------------------------------------------------|--------------------|-----|
-| -t    | twitter account name without '@'                 | `SuperDuperBot`    | Yes |
+| -t    | twitter account name without '@'                 | `SuperDuper`    | Yes |
 | -i    | Mastodon instance domain name                    | `botsin.space`     | Yes |
 | -m    | Mastodon username                                | `superduperbot`    | Yes |
 | -p    | Mastodon password                                | `my_Sup3r-S4f3*pw` | Yes |
 | -v    | upload videos to Mastodon                        | *N/A*              | No  |
 | -r    | Post reply-to tweets (ignored by default)        | *N/A*              | No  |
-| -a    | Max. age of tweet to post (in days)              | `1`                | No  |
+| -a    | Max. age of tweet to post (in days)              | `5`                | No  |
 | -d    | Min. delay before posting new tweet (in minutes) | `15`               | No  |
 
 When using the `-v` switch consider:
-* The copyright of the content that you want to cross-post
-* The storage / transfer limitations of the Mastodon instance that you are posting to
-* The upstream bandwidth that you may consume on your internet connection
+* whether the copyright of the content that you want to cross-post allows it
+* the storage / transfer limitations of the Mastodon instance that you are posting to
+* the upstream bandwidth that you may consume on your internet connection
 
 Default max age is 1 day. Decimal values are OK.
 
@@ -64,13 +64,15 @@ Default min delay is 0 minutes.
 
 Make sure python3 is installed.
 
-Twoot depends on beautifulsoup4 and mastodon python module. It also
-requires m3u8 and ffmpeg-python.
+Twoot depends on `beautifulsoup4` and `Mastodon.py` python modules.
 
-ffmpeg must also be installed.
+If you plan to use the `-v` switch to download videos, the additional depedencies are required:
+* Python modules `m3u8` and `ffmpeg-python`
+* [ffmpeg](https://ffmpeg.org/download.html) (check the package manager of your distribution) 
 
-    pip install beautifulsoup4 Mastodon.py m3u8 ffmpeg-python
-
+```
+> pip install beautifulsoup4 Mastodon.py m3u8 ffmpeg-python
+```
 In your user folder, execute `git clone https://gitlab.com/jeancf/twoot.git`
 to clone repo with twoot.py script.
 
