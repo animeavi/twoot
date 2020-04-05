@@ -1,8 +1,16 @@
+# Twoot
+
+Twoot is a python script that extracts tweets from a twitter feed and
+reposts them as toots on a Mastodon account.
+
 I started twoot when [tootbot](https://github.com/cquest/tootbot)
 stopped working. Tootbot relies on rss feeds from https://twitrss.me
 that broke when Twitter refreshed their web UI in July 2019.
 
 Instead twoot is self contained and handles all the processing.  
+
+**UPDATE 05 APR 2020** VERSION 1.0. Twoot can now optionally download
+videos from Twitter and upload them on Mastodon.
 
 **UPDATE 17 MAR 2020** Added command line switch (`-r`) to also post
 reply-to tweets on the mastodon account. They will not be included by
@@ -66,9 +74,9 @@ Make sure python3 is installed.
 
 Twoot depends on `beautifulsoup4` and `Mastodon.py` python modules.
 
-If you plan to use the `-v` switch to download videos, the additional depedencies are required:
+**Only If you plan to download videos** with the `-v` switch, are the additional dependencies required:
 * Python modules `m3u8` and `ffmpeg-python`
-* [ffmpeg](https://ffmpeg.org/download.html) (check the package manager of your distribution) 
+* [ffmpeg](https://ffmpeg.org/download.html) (installed with the package manager of your distribution) 
 
 ```
 > pip install beautifulsoup4 Mastodon.py m3u8 ffmpeg-python

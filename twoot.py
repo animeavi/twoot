@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-'''
+"""
     Copyright (C) 2019  Jean-Christophe Francois
 
     This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-'''
+"""
 
 import sys
 import argparse
@@ -550,6 +550,7 @@ def main(argv):
         shutil.rmtree('./output/' + twit_account)
     except FileNotFoundError:  # The directory does not exist
         pass
+
 
 if __name__ == "__main__":
     main(sys.argv)
