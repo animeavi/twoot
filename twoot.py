@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-'''
+"""
     Copyright (C) 2019  Jean-Christophe Francois
 
     This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-'''
+"""
 
 import sys
 import argparse
@@ -29,8 +29,9 @@ import datetime, time
 import re
 from pathlib import Path
 from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalArgumentError
-import twitterdl
+import subprocess
 import json.decoder
+import shutil
 
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
@@ -84,11 +85,17 @@ def handle_no_js(session, page, headers):
 
     return new_page
 
-def cleanup_tweet_text(tt_iter):
+
+def cleanup_tweet_text(tt_iter, twit_account, status_id, tweet_uri, get_vids):
     '''
     Receives an iterator over all the elements contained in the tweet-text container.
     Processes them to remove Twitter-specific stuff and make them suitable for
     posting on Mastodon
+    :param tt_iter: iterator over the HTML elements in the text of the tweet
+    :param twit_account: Used to name directory where videos are downloaded
+    :param status_id: Used to name directory where videos are downloaded
+    :param tweet_uri: Used to downloaded videos
+    :param get_vids: True to download embedded twitter videos and save them on the filesystem
     '''
     tweet_text = ''
     # Iterate elements
@@ -120,15 +127,23 @@ def cleanup_tweet_text(tt_iter):
                     if tag.has_attr('data-expanded-path'):
                         data_expanded_path = tag['data-expanded-path']
                         if 'video' in data_expanded_path:
-                            # Download video from twitter and store in filesystem
-                            tweet_uri = "https://twitter.com/" + data_expanded_path.strip("/video/1")
-                            twitter_dl = twitterdl.TwitterDownloader(tweet_uri, target_width=500, debug=1)
-                            try:
-                                twitter_dl.download()
-                            except json.JSONDecodeError:
-                                print("ERROR: Could not get playlist")
-
-                            tweet_text += '\n\n[Video embedded in original tweet]'
+                            if get_vids:
+                                # Download video from twitter and store in filesystem. Running as subprocess to avoid
+                                # requirement to install ffmpeg and ffmpeg-python for those that do not want to post videos
+                                try:
+                                    # TODO  set output location to ./output/twit_account/status_id
+                                    dl_feedback = subprocess.run(
+                                        ["./twitterdl.py", tweet_uri, "-ooutput/" + twit_account + "/" + status_id, "-w 500"],
+                                        capture_output=True
+                                    )
+                                    if dl_feedback.returncode != 0:
+                                        # TODO  Log dl_feedback.stderr
+                                        tweet_text += '\n\n[Video embedded in original tweet]'
+                                except OSError:
+                                    print("Could not execute twitterdl.py (is it there? Is it set as executable?)")
+                                    sys.exit(-1)
+                            else:
+                                tweet_text += '\n\n[Video embedded in original tweet]'
 
         # If element is hashflag (hashtag + icon), handle as simple hashtag
         elif tag.name == 'span' and tag['class'][0] == 'twitter-hashflag-container':
@@ -177,15 +192,15 @@ def contains_class(body_classes, some_class):
 def main(argv):
 
     # Build parser for command line arguments
-    # TODO  Add option for ingestion of video content
     parser = argparse.ArgumentParser(description='toot tweets.')
     parser.add_argument('-t', metavar='<twitter account>', action='store', required=True)
     parser.add_argument('-i', metavar='<mastodon instance>', action='store', required=True)
     parser.add_argument('-m', metavar='<mastodon account>', action='store', required=True)
     parser.add_argument('-p', metavar='<mastodon password>', action='store', required=True)
-    parser.add_argument('-r', action='store_true')
-    parser.add_argument('-a', metavar='<max age in days>', action='store', type=float, default=1)
-    parser.add_argument('-d', metavar='<min delay in mins>', action='store', type=float, default=0)
+    parser.add_argument('-r', action='store_true', help='Also post replies to other tweets')
+    parser.add_argument('-v', action='store_true', help='Ingest twitter videos and upload to Mastodon instance')
+    parser.add_argument('-a', metavar='<max age (in days)>', action='store', type=float, default=1)
+    parser.add_argument('-d', metavar='<min delay (in mins)>', action='store', type=float, default=0)
 
     # Parse command line
     args = vars(parser.parse_args())
@@ -195,8 +210,15 @@ def main(argv):
     mast_account = args['m']
     mast_password = args['p']
     tweets_and_replies = args['r']
+    get_vids = args['v']
     max_age = float(args['a'])
     min_delay = float(args['d'])
+
+    # Try to open database. If it does not exist, create it
+    sql = sqlite3.connect('twoot.db')
+    db = sql.cursor()
+    db.execute('''CREATE TABLE IF NOT EXISTS toots (twitter_account TEXT, mastodon_instance TEXT,
+               mastodon_account TEXT, tweet_id TEXT, toot_id TEXT)''')
 
     # **********************************************************
     # Load twitter page of user. Process all tweets and generate
@@ -239,13 +261,29 @@ def main(argv):
 
     # Verify that we now have the correct twitter page
     body_classes = soup.body.get_attribute_list('class')
-    assert contains_class(body_classes, 'users-show-page'), \
-        'This is not the correct twitter page. Quitting'
+    assert contains_class(body_classes, 'users-show-page'), 'This is not the correct twitter page. Quitting'
+
+    # Replace twit_account with version with correct capitalization
+    twit_account = soup.find('span', class_='screen-name').get_text()
 
     # Extract twitter timeline
     timeline = soup.find_all('table', class_='tweet')
 
     for status in timeline:
+
+        # Extract tweet ID and status ID
+        tweet_id = str(status['href']).strip('?p=v')
+        status_id = tweet_id.split('/')[3]
+
+        # Check in database if tweet has already been posted
+        db.execute('''SELECT * FROM toots WHERE twitter_account = ? AND mastodon_instance  = ? AND
+                   mastodon_account = ? AND tweet_id = ?''',
+                   (twit_account, mast_instance, mast_account, tweet_id))
+        tweet_in_db = db.fetchone()
+
+        if tweet_in_db is not None:
+            # Skip to next tweet
+            continue
 
         reply_to_username = None
         # Check if the tweet is a reply-to
@@ -258,9 +296,6 @@ def main(argv):
             else:
                 # Skip this tweet
                 continue
-
-        # Extract tweet id
-        tweet_id = str(status['href']).strip('?p=v')
 
         # Extract url of full status page
         full_status_url = 'https://mobile.twitter.com' + tweet_id + '?p=v'
@@ -305,7 +340,7 @@ def main(argv):
             authenticity_token = soup.find('input', {'name': 'authenticity_token'}).get('value')
             form_input = {'show_media': 1, 'authenticity_token': authenticity_token, 'commit': 'Display media'}
 
-            full_status_page = session.post(full_status_url + '?p=v', data=form_input, headers=headers)
+            full_status_page = session.post(full_status_url, data=form_input, headers=headers)
 
             # Verify that download worked
             assert full_status_page.status_code == 200, \
@@ -338,7 +373,7 @@ def main(argv):
         # extract iterator over tweet text contents
         tt_iter = tmt.find('div', class_='tweet-text').div.children
 
-        tweet_text = cleanup_tweet_text(tt_iter)
+        tweet_text = cleanup_tweet_text(tt_iter, twit_account, status_id, full_status_url, get_vids)
 
         # Mention if the tweet is a reply-to
         if reply_to_username is not None:
@@ -381,13 +416,19 @@ def main(argv):
                     pass
 
         # Check if video was downloaded
-        sid = re.search('/([0-9]+)$', tweet_id)
-        status_id = sid.groups()[0]
-        video_path = Path('./output') / author_account / status_id
-        video_file_list = list(video_path.glob('*.mp4'))
         video_file = None
-        if len(video_file_list) != 0:
-            video_file = video_file_list[0].absolute().as_posix()
+
+        video_path = Path('./output') / twit_account / status_id
+        if video_path.exists():
+            # Take the first subdirectory of video path (named after original poster of video)
+            video_path = [p for p in video_path.iterdir() if p.is_dir()][0]
+            # Take again the first subdirectory of video path (named after status id of original post where vidoe is attached)
+            video_path = [p for p in video_path.iterdir() if p.is_dir()][0]
+            # list video files
+            video_file_list = list(video_path.glob('*.mp4'))
+            if len(video_file_list) != 0:
+                # Extract posix path of first video file in list
+                video_file = video_file_list[0].absolute().as_posix()
 
         # Add dictionary with content of tweet to list
         tweet = {
@@ -407,15 +448,9 @@ def main(argv):
     #     print(t)
 
     # **********************************************************
-    # Iterate tweets. Check if the tweet has already been posted
-    # on Mastodon. If not, post it and add it to database
+    # Iterate tweets in list.
+    # post each on Mastodon and reference to it in database
     # **********************************************************
-
-    # Try to open database. If it does not exist, create it
-    sql = sqlite3.connect('twoot.db')
-    db = sql.cursor()
-    db.execute('''CREATE TABLE IF NOT EXISTS toots (twitter_account TEXT, mastodon_instance TEXT,
-               mastodon_account TEXT, tweet_id TEXT, toot_id TEXT)''')
 
     # Create Mastodon application if it does not exist yet
     if not os.path.isfile(mast_instance + '.secret'):
@@ -450,17 +485,6 @@ def main(argv):
 
     # Upload tweets
     for tweet in reversed(tweets):
-        # Check in database if tweet has already been posted
-        # FIXME  Move tests to the front of the process to avoid the unnecessary processing of already ingested tweets
-        db.execute('''SELECT * FROM toots WHERE twitter_account = ? AND mastodon_instance  = ? AND
-                   mastodon_account = ? AND tweet_id = ?''',
-                   (twit_account, mast_instance, mast_account, tweet['tweet_id']))
-        tweet_in_db = db.fetchone()
-
-        if tweet_in_db is not None:
-            # Skip to next tweet
-            continue
-
         # Check that the tweet is not too young (might be deleted) or too old
         age_in_hours = (time.time() - float(tweet['timestamp'])) / 3600.0
         min_delay_in_hours = min_delay / 60.0
@@ -470,23 +494,33 @@ def main(argv):
             # Skip to next tweet
             continue
 
-        # Upload photos
         media_ids = []
-        for photo in tweet['photos']:
-            media = False
-            # Download picture
+
+        # Upload video if there is one
+        if tweet['video'] is not None:
             try:
-                media = requests.get(photo)
-            except:  # Picture cannot be downloaded for any reason
+                media_posted = mastodon.media_post(tweet['video'])
+                media_ids.append(media_posted['id'])
+            except (MastodonAPIError, MastodonIllegalArgumentError, TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
                 pass
 
-            # Upload picture to Mastodon instance
-            if media:
+        else:  # Only upload pic if no video was uploaded
+            # Upload photos
+            for photo in tweet['photos']:
+                media = False
+                # Download picture
                 try:
-                    media_posted = mastodon.media_post(media.content, mime_type=media.headers['content-type'])
-                    media_ids.append(media_posted['id'])
-                except (MastodonAPIError, MastodonIllegalArgumentError, TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
+                    media = requests.get(photo)
+                except:  # Picture cannot be downloaded for any reason
                     pass
+
+                # Upload picture to Mastodon instance
+                if media:
+                    try:
+                        media_posted = mastodon.media_post(media.content, mime_type=media.headers['content-type'])
+                        media_ids.append(media_posted['id'])
+                    except (MastodonAPIError, MastodonIllegalArgumentError, TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
+                        pass
 
         # Post toot
         try:
@@ -510,6 +544,12 @@ def main(argv):
             db.execute("INSERT INTO toots VALUES ( ? , ? , ? , ? , ? )",
                        (twit_account, mast_instance, mast_account, tweet['tweet_id'], toot['id']))
             sql.commit()
+
+    # Cleanup downloaded video files
+    try:
+        shutil.rmtree('./output/' + twit_account)
+    except FileNotFoundError:  # The directory does not exist
+        pass
 
 
 if __name__ == "__main__":

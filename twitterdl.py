@@ -1,6 +1,28 @@
+#! /usr/bin/env python3
+
+"""
+    This file is a modification of
+    https://github.com/h4ckninja/twitter-video-downloader/
+	The original package has an unknown license. The modified version
+	is released here under GPL v3.
+
+    Copyright (C) 2019  Jean-Christophe Francois
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
 
 import argparse
-
 import requests
 import json
 import urllib.parse
