@@ -409,10 +409,12 @@ def main(argv):
                         if match is not None:
                             url = match.group(1).replace('&amp;', '&')  # Remove HTML-safe encoding from URL if any
                             photos.append(url)
+                # Give up if anything goes wrong
                 except (requests.exceptions.ConnectionError,
                         requests.exceptions.Timeout,
                         requests.exceptions.ContentDecodingError,
-                        requests.exceptions.TooManyRedirects):
+                        requests.exceptions.TooManyRedirects,
+                        requests.exceptions.MissingSchema):
                     pass
 
         # Check if video was downloaded
