@@ -4,3 +4,4 @@ venv/
 *.secret
 *.sh
 twoot.db
+__pycache__
