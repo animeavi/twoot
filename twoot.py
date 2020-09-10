@@ -401,21 +401,22 @@ def main(argv):
             m = re.search(r"http[^ \n\xa0]*", tweet_text)
             if m is not None:
                 link_url = m.group(0)
-                try:
-                    r = requests.get(link_url, timeout=10)
-                    if r.status_code == 200:
-                        # Matches the first instance of either twitter:image or twitter:image:src meta tag
-                        match = re.search(r'<meta name="twitter:image(?:|:src)" content="(.+?)".*?>', r.text)
-                        if match is not None:
-                            url = match.group(1).replace('&amp;', '&')  # Remove HTML-safe encoding from URL if any
-                            photos.append(url)
-                # Give up if anything goes wrong
-                except (requests.exceptions.ConnectionError,
-                        requests.exceptions.Timeout,
-                        requests.exceptions.ContentDecodingError,
-                        requests.exceptions.TooManyRedirects,
-                        requests.exceptions.MissingSchema):
-                    pass
+                if link_url.endswith(".html"):  # Only process a web page
+                    try:
+                        r = requests.get(link_url, timeout=10)
+                        if r.status_code == 200:
+                            # Matches the first instance of either twitter:image or twitter:image:src meta tag
+                            match = re.search(r'<meta name="twitter:image(?:|:src)" content="(.+?)".*?>', r.text)
+                            if match is not None:
+                                url = match.group(1).replace('&amp;', '&')  # Remove HTML-safe encoding from URL if any
+                                photos.append(url)
+                    # Give up if anything goes wrong
+                    except (requests.exceptions.ConnectionError,
+                            requests.exceptions.Timeout,
+                            requests.exceptions.ContentDecodingError,
+                            requests.exceptions.TooManyRedirects,
+                            requests.exceptions.MissingSchema):
+                        pass
 
         # Check if video was downloaded
         video_file = None
