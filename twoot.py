@@ -19,6 +19,7 @@
 """
 
 import sys
+import logging
 import argparse
 import os
 import random
@@ -42,8 +43,9 @@ USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64; Xbox; Xbox One) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36 Edge/44.18363.8131',
     ]
 
-#TODO log to file
-
+# Setup logging to file
+logging.basicConfig(filename="twoot.log", level=logging.DEBUG)
+logging.info('*********** NEW RUN ***********')
 
 def handle_no_js(session, page, headers):
     """
@@ -270,10 +272,11 @@ def main(argv):
     timeline = soup.find_all('table', class_='tweet')
 
     for status in timeline:
-
         # Extract tweet ID and status ID
         tweet_id = str(status['href']).strip('?p=v')
         status_id = tweet_id.split('/')[3]
+
+        logging.debug('processing tweet %s', tweet_id)
 
         # Check in database if tweet has already been posted
         db.execute('''SELECT * FROM toots WHERE twitter_account = ? AND mastodon_instance  = ? AND
@@ -282,8 +285,11 @@ def main(argv):
         tweet_in_db = db.fetchone()
 
         if tweet_in_db is not None:
+            logging.debug("Tweet %s already in database", tweet_id)
             # Skip to next tweet
             continue
+
+        logging.debug('Tweet %s not found in database', tweet_id)
 
         reply_to_username = None
         # Check if the tweet is a reply-to
@@ -446,9 +452,11 @@ def main(argv):
         }
         tweets.append(tweet)
 
+        logging.debug('Tweet %s added to list to upload', tweet_id)
+
     # DEBUG: Print extracted tweets
-    #for t in tweets:
-    #     print(t)
+    for t in tweets:
+         print(t)
 
     # **********************************************************
     # Iterate tweets in list.
@@ -488,6 +496,7 @@ def main(argv):
 
     # Upload tweets
     for tweet in reversed(tweets):
+        logging.debug('Uploading Tweet %s', tweet["tweet_id"])
         # Check that the tweet is not too young (might be deleted) or too old
         age_in_hours = (time.time() - float(tweet['timestamp'])) / 3600.0
         min_delay_in_hours = min_delay / 60.0
@@ -526,6 +535,7 @@ def main(argv):
                         pass
 
         # Post toot
+        logging.debug('Doing it now')
         try:
             mastodon = Mastodon(
                 access_token=mast_account + '.secret',
@@ -538,9 +548,11 @@ def main(argv):
                 toot = mastodon.status_post(tweet['tweet_text'], media_ids=media_ids, visibility='public')
 
         except MastodonError as me:
-            print('ERROR: posting ' + tweet['tweet_text'] + ' to ' + mast_instance + ' Failed')
-            print(me)
+            logging.error('posting ' + tweet['tweet_text'] + ' to ' + mast_instance + ' Failed')
+            logging.error(me)
             sys.exit(1)
+
+        logging.debug('Tweet %s posted on %s', tweet_id, mast_account)
 
         # Insert toot id into database
         if 'id' in toot:
