@@ -133,7 +133,7 @@ def cleanup_tweet_text(tt_iter, twit_account, status_id, tweet_uri, get_vids):
                                 # Download video from twitter and store in filesystem. Running as subprocess to avoid
                                 # requirement to install ffmpeg and ffmpeg-python for those that do not want to post videos
                                 try:
-                                    # TODO  set output location to ./output/twit_account/status_id
+                                    # Set output location to ./output/twit_account/status_id
                                     dl_feedback = subprocess.run(
                                         ["./twitterdl.py", tweet_uri, "-ooutput/" + twit_account + "/" + status_id, "-w 500"],
                                         capture_output=True
