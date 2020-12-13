@@ -463,8 +463,8 @@ def main(argv):
         logging.debug('Tweet %s added to list to upload', tweet_id)
 
     # DEBUG: Print extracted tweets
-    for t in tweets:
-         print(t)
+#    for t in tweets:
+#         print(t)
 
     # **********************************************************
     # Iterate tweets in list.
