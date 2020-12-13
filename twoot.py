@@ -283,17 +283,20 @@ def main(argv):
         logging.debug('processing tweet %s', tweet_id)
 
         # Check in database if tweet has already been posted
-        db.execute('''SELECT * FROM toots WHERE twitter_account = ? AND mastodon_instance  = ? AND
-                   mastodon_account = ? AND tweet_id = ?''',
+        db.execute("SELECT * FROM toots WHERE twitter_account=? AND mastodon_instance=? AND mastodon_account=? AND tweet_id=?",
                    (twit_account, mast_instance, mast_account, tweet_id))
         tweet_in_db = db.fetchone()
+
+        logging.debug("SELECT * FROM toots WHERE twitter_account='{}' AND mastodon_instance='{}' AND mastodon_account='{}' AND tweet_id='{}'"
+                      .format(twit_account, mast_instance, mast_account, tweet_id)
+                      )
 
         if tweet_in_db is not None:
             logging.debug("Tweet %s already in database", tweet_id)
             # Skip to next tweet
             continue
-
-        logging.debug('Tweet %s not found in database', tweet_id)
+        else:
+            logging.debug('Tweet %s not found in database', tweet_id)
 
         reply_to_username = None
         # Check if the tweet is a reply-to
@@ -305,6 +308,7 @@ def main(argv):
                 reply_to_username = reply_to_div.a.get_text()
             else:
                 # Skip this tweet
+                logging.debug("Tweet is a reply-to and we don't want that. Skipping.")
                 continue
 
         # Extract url of full status page
@@ -508,6 +512,7 @@ def main(argv):
 
         if age_in_hours < min_delay_in_hours or age_in_hours > max_age_in_hours:
             # Skip to next tweet
+            logging.debug("Tweet too young or too old, skipping")
             continue
 
         media_ids = []
@@ -515,9 +520,11 @@ def main(argv):
         # Upload video if there is one
         if tweet['video'] is not None:
             try:
+                logging.debug("Uploading video")
                 media_posted = mastodon.media_post(tweet['video'])
                 media_ids.append(media_posted['id'])
             except (MastodonAPIError, MastodonIllegalArgumentError, TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
+                logging.debug("Uploading video failed")
                 pass
 
         else:  # Only upload pic if no video was uploaded
