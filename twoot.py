@@ -44,8 +44,8 @@ USER_AGENTS = [
     ]
 
 # Setup logging to file
-logging.basicConfig(filename="twoot.log", level=logging.DEBUG)
-logging.info('*********** NEW RUN ***********')
+logging.basicConfig(filename="twoot.log", level=logging.WARNING)
+logging.debug('*********** NEW RUN ***********')
 
 def handle_no_js(session, page, headers):
     """
@@ -136,14 +136,18 @@ def cleanup_tweet_text(tt_iter, twit_account, status_id, tweet_uri, get_vids):
                                     # Set output location to ./output/twit_account/status_id
                                     dl_feedback = subprocess.run(
                                         ["./twitterdl.py", tweet_uri, "-ooutput/" + twit_account + "/" + status_id, "-w 500"],
-                                        capture_output=True
+                                        capture_output=True,
+                                        timeout=300  # let's try 5 minutes
                                     )
                                     if dl_feedback.returncode != 0:
-                                        # TODO  Log dl_feedback.stderr
+                                        logging.warning('Video in tweet ' + status_id + ' from ' + twit_account + ' failed to download')
                                         tweet_text += '\n\n[Video embedded in original tweet]'
                                 except OSError:
-                                    print("Could not execute twitterdl.py (is it there? Is it set as executable?)")
+                                    logging.error("Could not execute twitterdl.py (is it there? Is it set as executable?)")
                                     sys.exit(-1)
+                                except subprocess.TimeoutExpired:
+                                    # Video download and encoding took too long
+                                    tweet_text += '\n\n[Video embedded in original tweet]'
                             else:
                                 tweet_text += '\n\n[Video embedded in original tweet]'
 
