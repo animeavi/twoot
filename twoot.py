@@ -235,12 +235,11 @@ def main(argv):
 
     # Extract twitter timeline
     timeline = soup.find_all('div', class_='timeline-item')
-    print(len(timeline))
-    exit(0)
 
+    logging.info('Processing timeline')
     for status in timeline:
         # Extract tweet ID and status ID
-        tweet_id = str(status['href']).strip('?p=v')
+        tweet_id = status.find('a', class_='tweet-link').get('href').strip('#m')
         status_id = tweet_id.split('/')[3]
 
         logging.debug('processing tweet %s', tweet_id)
@@ -250,10 +249,6 @@ def main(argv):
                    (twit_account, mast_instance, mast_account, tweet_id))
         tweet_in_db = db.fetchone()
 
-        logging.debug("SELECT * FROM toots WHERE twitter_account='{}' AND mastodon_instance='{}' AND mastodon_account='{}' AND tweet_id='{}'"
-                      .format(twit_account, mast_instance, mast_account, tweet_id)
-                      )
-
         if tweet_in_db is not None:
             logging.debug("Tweet %s already in database", tweet_id)
             # Skip to next tweet
@@ -262,13 +257,12 @@ def main(argv):
             logging.debug('Tweet %s not found in database', tweet_id)
 
         reply_to_username = None
-        # Check if the tweet is a reply-to
-        reply_to_div = status.find('div', class_='tweet-reply-context username')
+        # TODO  Check if the tweet is a reply-to
+        reply_to_div = None
         if reply_to_div is not None:
             # Do we need to handle reply-to tweets?
             if tweets_and_replies:
-                # Capture user name being replied to
-                reply_to_username = reply_to_div.a.get_text()
+                # TODO  Capture user name being replied to
             else:
                 # Skip this tweet
                 logging.debug("Tweet is a reply-to and we don't want that. Skipping.")
