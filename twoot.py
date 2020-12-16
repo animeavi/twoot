@@ -268,32 +268,6 @@ def main(argv):
                 logging.debug("Tweet is a reply-to and we don't want that. Skipping.")
                 continue
 
-        # Extract url of full status page
-        full_status_url = 'https://mobile.twitter.com' + tweet_id + '?p=v'
-
-        # fetch full status page
-        full_status_page = session.get(full_status_url, headers=headers)
-
-        # Verify that download worked
-        assert full_status_page.status_code == 200, \
-            'The twitter page did not download correctly. Aborting'
-
-        # If we got a No Javascript page, download the correct page
-        full_status_page = handle_no_js(session, full_status_page, headers)
-
-        # DEBUG: Save page to file
-        #of = open('full_status_page.html', 'w')
-        #of.write(full_status_page.text)
-        #of.close()
-
-        # Make soup
-        soup = BeautifulSoup(full_status_page.text, 'html.parser')
-
-        # Verify that we now have the correct twitter page
-        body_classes = soup.body.get_attribute_list('class')
-        assert contains_class(body_classes, 'tweets-show-page'), \
-            'This is not the correct twitter page. Quitting'
-
         # Check if tweet contains pic censored as "Sensitive material"
         if soup.find('div', class_='accept-data') is not None:
             # If it does, submit form to obtain uncensored tweet
