@@ -215,7 +215,7 @@ def main(argv):
 
     # Verify that download worked
     assert twit_account_page.status_code == 200,\
-        'The twitter page did not download correctly. Aborting'
+        'The nitter page did not download correctly. Aborting'
 
     logging.info('Page downloaded successfully')
 
@@ -224,17 +224,14 @@ def main(argv):
     of.write(twit_account_page.text)
     of.close()
 
-    exit(0)
-
     # Make soup
     soup = BeautifulSoup(twit_account_page.text, 'html.parser')
 
-    # Verify that we now have the correct twitter page
-    body_classes = soup.body.get_attribute_list('class')
-    assert contains_class(body_classes, 'users-show-page'), 'This is not the correct twitter page. Quitting'
-
     # Replace twit_account with version with correct capitalization
-    twit_account = soup.find('span', class_='screen-name').get_text()
+    ta = soup.find('meta', property='og:title').get('content')
+    twit_account = re.search('\(@(.+)\)', ta).group(1)
+    print(twit_account)
+    exit(0)
 
     # Extract twitter timeline
     timeline = soup.find_all('table', class_='tweet')
