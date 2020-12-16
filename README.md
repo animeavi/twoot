@@ -50,7 +50,7 @@ is @superduperbot@botsin.space
 
 |Switch |Description                                       | Example            | Req |
 |-------|--------------------------------------------------|--------------------|-----|
-| -t    | twitter account name without '@'                 | `SuperDuper`    | Yes |
+| -t    | twitter account name without '@'                 | `SuperDuper`       | Yes |
 | -i    | Mastodon instance domain name                    | `botsin.space`     | Yes |
 | -m    | Mastodon username                                | `superduperbot`    | Yes |
 | -p    | Mastodon password                                | `my_Sup3r-S4f3*pw` | Yes |
