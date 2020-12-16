@@ -229,7 +229,10 @@ def main(argv):
 
     # Replace twit_account with version with correct capitalization
     ta = soup.find('meta', property='og:title').get('content')
-    twit_account = re.search('\(@(.+)\)', ta).group(1)
+    ta_match = re.search('\(@(.+)\)', ta)
+    if ta_match is not None:
+        twit_account = ta_match.group(1)
+
     print(twit_account)
     exit(0)
 
