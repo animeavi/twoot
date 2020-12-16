@@ -275,12 +275,15 @@ def main(argv):
         # Extract user name
         author_account = status.find('a', class_='username').get('title').lstrip('@')
 
+        # Extract URL of full status page (for video download)
+        full_status_url = 'https://twitter.com' + tweet_id
+
         # Extract time stamp
         time_string = status.find('span', class_='tweet-date').a.get('title')
         timestamp = datetime.datetime.strptime(time_string, '%d/%m/%Y, %H:%M:%S').timestamp()
 
         # extract iterator over tweet text contents
-        tt_iter = tmt.find('div', class_='tweet-text').div.children
+        tt_iter = status.find('div', class_='tweet-content media-body').children
 
         tweet_text = cleanup_tweet_text(tt_iter, twit_account, status_id, full_status_url, get_vids)
 
@@ -293,12 +296,12 @@ def main(argv):
             tweet_text = 'RT from ' + author + ' (@' + author_account + ')\n\n' + tweet_text
 
         # Add footer with link to original tweet
-        tweet_text += '\n\nOriginal tweet : https://twitter.com' + tweet_id
+        tweet_text += '\n\nOriginal tweet : ' + full_status_url
 
         photos = []  # The no_js version of twitter only shows one photo
 
         # Check if there are photos attached
-        media = tmt.find('div', class_='media')
+        media = status.find('div', class_='media')
         if media:
             # Extract photo url and add it to list
             pic = str(media.img['src']).strip(':small')
