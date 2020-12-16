@@ -268,9 +268,6 @@ def main(argv):
                 logging.debug("Tweet is a reply-to and we don't want that. Skipping.")
                 continue
 
-        # Extract avatar
-        author_logo_url = tmt.find('td', class_='avatar').a.img['src']
-
         # extract author
         author = tmt.find('div', class_='fullname').a.strong.get_text()
 
