@@ -233,11 +233,10 @@ def main(argv):
     if ta_match is not None:
         twit_account = ta_match.group(1)
 
-    print(twit_account)
-    exit(0)
-
     # Extract twitter timeline
-    timeline = soup.find_all('table', class_='tweet')
+    timeline = soup.find_all('div', class_='timeline-item')
+    print(len(timeline))
+    exit(0)
 
     for status in timeline:
         # Extract tweet ID and status ID
