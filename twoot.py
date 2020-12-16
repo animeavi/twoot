@@ -44,48 +44,8 @@ USER_AGENTS = [
     ]
 
 # Setup logging to file
-logging.basicConfig(filename="twoot.log", level=logging.WARNING)
-logging.debug('*********** NEW RUN ***********')
-
-def handle_no_js(session, page, headers):
-    """
-    Check if page is a "No Javascript" page instead of the content that we wanted
-    If it is, submit the form on the page as POST request to get the correct page and return it
-    :param session: current requests session
-    :param page: Response object to check
-    :param headers: HTTP headers used in initial request
-    :return: correct page (Response object)
-    """
-    # DEBUG: Save page to file
-    #of = open('no_js_page.html', 'w')
-    #of.write(page.text)
-    #of.close()
-
-    # Set default return value
-    new_page = page
-
-    # Make soup
-    soup = BeautifulSoup(page.text, 'html.parser')
-
-    if soup.form.p is not None:
-        if 'JavaScript is disabled' in str(soup.form.p.string):
-            # Submit POST form response with cookies
-            headers.update(
-                {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Referer': page.request.url,
-                }
-            )
-
-            action = soup.form.get('action')
-
-            # Submit the form
-            new_page = session.post(action, headers=headers, cookies=page.cookies)
-
-            # Verify that download worked
-            assert (new_page.status_code == 200), 'The twitter page did not download correctly. Aborting'
-
-    return new_page
+logging.basicConfig(filename="twoot.log", level=logging.INFO)
+logging.info('*********** NEW RUN ***********')
 
 
 def cleanup_tweet_text(tt_iter, twit_account, status_id, tweet_uri, get_vids):
@@ -195,6 +155,7 @@ def contains_class(body_classes, some_class):
 
     return found
 
+
 def main(argv):
 
     # Build parser for command line arguments
@@ -219,6 +180,8 @@ def main(argv):
     get_vids = args['v']
     max_age = float(args['a'])
     min_delay = float(args['d'])
+
+    logging.info('Updating ' + twit_account + ' on ' + mast_instance)
 
     # Try to open database. If it does not exist, create it
     sql = sqlite3.connect('twoot.db')
@@ -246,21 +209,22 @@ def main(argv):
         }
     )
 
-    url = 'https://mobile.twitter.com/' + twit_account
-    # Download twitter page of user. We should get a 'no javascript' landing page and some cookies
+    url = 'https://nitter.net/' + twit_account
+    # Download twitter page of user.
     twit_account_page = session.get(url, headers=headers)
 
     # Verify that download worked
     assert twit_account_page.status_code == 200,\
         'The twitter page did not download correctly. Aborting'
 
-    # If we got a No Javascript page, download the correct page
-    twit_account_page = handle_no_js(session, twit_account_page, headers)
+    logging.info('Page downloaded successfully')
 
     # DEBUG: Save page to file
-    #of = open(twit_account + '.html', 'w')
-    #of.write(twit_account_page.text)
-    #of.close()
+    of = open(twit_account + '.html', 'w')
+    of.write(twit_account_page.text)
+    of.close()
+
+    exit(0)
 
     # Make soup
     soup = BeautifulSoup(twit_account_page.text, 'html.parser')
