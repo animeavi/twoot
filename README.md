@@ -1,3 +1,12 @@
+> **Twoot is momentarily broken.**
+> 
+> On December 15, 2020, twitter retired
+> the no-javascript version of their site that this bot was sourcing 
+> content from.
+> 
+> An alternative version based on nitter.net is being worked on in the
+> *nitter* branch and should be ready soon. 
+
 # Twoot
 
 Twoot is a python script that extracts tweets from a twitter feed and
