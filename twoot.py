@@ -268,40 +268,6 @@ def main(argv):
                 logging.debug("Tweet is a reply-to and we don't want that. Skipping.")
                 continue
 
-        # Check if tweet contains pic censored as "Sensitive material"
-        if soup.find('div', class_='accept-data') is not None:
-            # If it does, submit form to obtain uncensored tweet
-            # Submit POST form response with cookies
-            headers.update(
-                {
-                    'Origin': 'https://mobile.twitter.com',
-                    'Host': 'mobile.twitter.com',
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Referer': full_status_url,
-                }
-            )
-
-            # Data payload for POST request
-            authenticity_token = soup.find('input', {'name': 'authenticity_token'}).get('value')
-            form_input = {'show_media': 1, 'authenticity_token': authenticity_token, 'commit': 'Display media'}
-
-            full_status_page = session.post(full_status_url, data=form_input, headers=headers)
-
-            # Verify that download worked
-            assert full_status_page.status_code == 200, \
-                'The twitter page did not download correctly. Aborting'
-
-            # DEBUG: Save page to file
-            #of = open('full_status_page_uncensored.html', 'w')
-            #of.write(full_status_page.text)
-            #of.close()
-
-            # Remake soup
-            soup = BeautifulSoup(full_status_page.text, 'html.parser')
-
-        # Isolate table main-tweet
-        tmt = soup.find('table', class_='main-tweet')
-
         # Extract avatar
         author_logo_url = tmt.find('td', class_='avatar').a.img['src']
 
