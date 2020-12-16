@@ -263,20 +263,21 @@ def main(argv):
             # Do we need to handle reply-to tweets?
             if tweets_and_replies:
                 # TODO  Capture user name being replied to
+                pass
             else:
                 # Skip this tweet
                 logging.debug("Tweet is a reply-to and we don't want that. Skipping.")
                 continue
 
         # extract author
-        author = tmt.find('div', class_='fullname').a.strong.get_text()
+        author = status.find('a', class_='fullname').get('title')
 
         # Extract user name
-        author_account = str(tmt.find('span', class_='username').span.next_sibling).strip('\n ')
+        author_account = status.find('a', class_='username').get('title').lstrip('@')
 
         # Extract time stamp
-        time_string = tmt.find('div', class_='metadata').a.get_text()
-        timestamp = datetime.datetime.strptime(time_string, '%I:%M %p - %d %b %Y').timestamp()
+        time_string = status.find('span', class_='tweet-date').a.get('title')
+        timestamp = datetime.datetime.strptime(time_string, '%d/%m/%Y, %H:%M:%S').timestamp()
 
         # extract iterator over tweet text contents
         tt_iter = tmt.find('div', class_='tweet-text').div.children
