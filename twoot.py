@@ -79,6 +79,22 @@ def process_media_body(tt_iter):
     return tweet_text
 
 
+def process_card(card_container):
+    '''
+    Extract image from card in case mastodon does not do it
+    :param card_container: soup of 'a' tag containing card markup
+    :return: list with url of image
+    '''
+    list = []
+    link = card_container.get('href')
+
+    # Dailymotion
+    if link.contains('dailymotion.com'):
+        image_url = 'twitter.com' + card_container.div.div.img.get('src')
+        list.append(image_url)
+
+    return list
+
 def contains_class(body_classes, some_class):
     '''
     :param body_classes: list of classes to search
@@ -233,8 +249,9 @@ def main(argv):
         # Extract URL of full status page (for video download)
         full_status_url = 'https://twitter.com' + tweet_id
 
-        # Initialize tweet text
+        # Initialize containers
         tweet_text = ''
+        photos = []
 
         # Add prefix if the tweet is a reply-to
         replying_to_class = status.find('div', class_='replying-to')
@@ -248,18 +265,27 @@ def main(argv):
         # extract iterator over tweet text contents
         tt_iter = status.find('div', class_='tweet-content media-body').children
 
-        tweet_text += process_media_body(tt_iter, twit_account, status_id, full_status_url, get_vids)
+        # Process text of tweet
+        tweet_text += process_media_body(tt_iter)
 
-        # TODO  Process quote: append link to tweet_text
+        # Process quote: append link to tweet_text
+        quote_div = status.find('div', class_='quote-link')
+        if quote_div is not None:
+            tweet_text += '\n twitter.com' + quote_div.get('href').strip('#m')
 
-        # TODO  Process card : extract image or youtube link
+        # Process card : extract image if necessary
+        card_class = status.find('a', class_='card-container')
+        if card_class is not None:
+            photos.extend(process_card(card_class))
 
         # TODO  Process attachment: capture image or .mp4 url or download twitter video
+        attachments_class = status.find('a', class_='attachments')
+        if card_class is not None:
+            photos.extend(process_attachments(attachments_class))
 
         # Add footer with link to original tweet
         tweet_text += '\n\nOriginal tweet : ' + full_status_url
 
-        photos = []  # The no_js version of twitter only shows one photo
 
         # Check if there are photos attached
         media = status.find('div', class_='media')
