@@ -206,6 +206,7 @@ def main(argv):
     headers.update(
         {
             'User-Agent': USER_AGENTS[random.randint(0, len(USER_AGENTS)-1)],
+            'Cookie': 'replaceTwitter=; replaceYouTube=',
         }
     )
 
