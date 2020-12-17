@@ -47,16 +47,12 @@ logging.basicConfig(filename="twoot.log", level=logging.INFO)
 logging.info('*********** NEW RUN ***********')
 
 
-def process_media_body(tt_iter, twit_account, status_id, tweet_uri, get_vids):
+def process_media_body(tt_iter):
     '''
     Receives an iterator over all the elements contained in the tweet-text container.
-    Processes them to remove Twitter-specific stuff and make them suitable for
-    posting on Mastodon
+    Processes them to make them suitable for posting on Mastodon
     :param tt_iter: iterator over the HTML elements in the text of the tweet
-    :param twit_account: Used to name directory where videos are downloaded
-    :param status_id: Used to name directory where videos are downloaded
-    :param tweet_uri: Used to downloaded videos
-    :param get_vids: True to download embedded twitter videos and save them on the filesystem
+    :return:        cleaned up text of the tweet
     '''
     tweet_text = ''
     # Iterate elements
@@ -66,75 +62,17 @@ def process_media_body(tt_iter, twit_account, status_id, tweet_uri, get_vids):
             tweet_text += tag.string
 
         # If it is an 'a' html tag
-        elif tag.name == 'a' and tag.has_attr('class'):
-            # If element is a #hashtag, only keep text
-            for tc in tag['class']:
-                if tc == 'twitter-hashtag':
-                    tweet_text += tag.get_text()
-
-                # If element is a mention of @someuser, only keep text
-                elif tc == 'twitter-atreply':
-                    tweet_text += tag.get_text()
-
-                # If element is an external link
-                elif tc == 'twitter_external_link':
-                    # If element is a simple link
-                    if tag.has_attr('data-expanded-url'):
-                        # Add a sometimes missing space before url
-                        if not tweet_text.endswith(' ') and not tweet_text.endswith('\n'):
-                            tweet_text += ' '
-                        # Add full url
-                        tweet_text += tag['data-expanded-url']
-                    if tag.has_attr('data-expanded-path'):
-                        data_expanded_path = tag['data-expanded-path']
-                        if 'video' in data_expanded_path:
-                            if get_vids:
-                                # Download video from twitter and store in filesystem. Running as subprocess to avoid
-                                # requirement to install ffmpeg and ffmpeg-python for those that do not want to post videos
-                                try:
-                                    # Set output location to ./output/twit_account/status_id
-                                    dl_feedback = subprocess.run(
-                                        ["./twitterdl.py", tweet_uri, "-ooutput/" + twit_account + "/" + status_id, "-w 500"],
-                                        capture_output=True,
-                                        timeout=300  # let's try 5 minutes
-                                    )
-                                    if dl_feedback.returncode != 0:
-                                        logging.warning('Video in tweet ' + status_id + ' from ' + twit_account + ' failed to download')
-                                        tweet_text += '\n\n[Video embedded in original tweet]'
-                                except OSError:
-                                    logging.error("Could not execute twitterdl.py (is it there? Is it set as executable?)")
-                                except subprocess.TimeoutExpired:
-                                    # Video download and encoding took too long
-                                    logging.error("twitterdl.py execution timed out")
-                                    tweet_text += '\n\n[Video embedded in original tweet]'
-                            else:
-                                tweet_text += '\n\n[Video embedded in original tweet]'
-
-        # If element is hashflag (hashtag + icon), handle as simple hashtag
-        elif tag.name == 'span' and tag['class'][0] == 'twitter-hashflag-container':
-            tweet_text += tag.a.get_text()
-
-        # If tag is an image
-        elif tag.name == 'img':
-            # If it is of class 'Emoji'
-            for tc in tag['class']:
-                if tc == 'Emoji':
-                    # Get url of Emoji
-                    src = tag["src"]
-                    # Use regex to extract unicode characters from file name
-                    uni_str = re.search('/([0-9A-Fa-f\-]+?).png$', src).group(1)
-                    # build the list of hex unicode characters separated by '-' in the file name
-                    uni_list = uni_str.split('-')
-                    # Extract individual unicode chars and add them to the tweet
-                    for uni_char in uni_list:
-                        # convert string to hex value of unicode character
-                        tweet_text += chr(int(uni_char, 16))
-
-        # elif tag is a geographical point of interest
-        elif tag.name == 'span' and tag['class'][0] == 'tweet-poi-geo-text':
-            # Not sure what to do
-            pass
-
+        elif tag.name == 'a':
+            tag_text = tag.get_text()
+            if tag_text.starts_with('@'):
+                # Only keep user name
+                tweet_text += tag_text
+            elif tag_text.starts_with('#'):
+                # Only keep hashtag text
+                tweet_text += tag_text
+            else:
+                # This is a real link, keep url
+                tweet_text += tag.get('href')
         else:
             logging.warning("No handler for tag in twitter text: " + tag.prettify())
 
