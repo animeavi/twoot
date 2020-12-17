@@ -47,7 +47,7 @@ logging.basicConfig(filename="twoot.log", level=logging.INFO)
 logging.info('*********** NEW RUN ***********')
 
 
-def process_tweet_content(tt_iter, twit_account, status_id, tweet_uri, get_vids):
+def process_media_body(tt_iter, twit_account, status_id, tweet_uri, get_vids):
     '''
     Receives an iterator over all the elements contained in the tweet-text container.
     Processes them to remove Twitter-specific stuff and make them suitable for
@@ -299,7 +299,6 @@ def main(argv):
         tweet_text = ''
 
         # Add prefix if the tweet is a reply-to
-        # <div class="replying-to">Replying to <a href="/tomwarren">@tomwarren</a></div>
         replying_to_class = status.find('div', class_='replying-to')
         if replying_to_class is not None:
             tweet_text += 'Replying to ' + replying_to_class.a.get_text()
@@ -311,7 +310,13 @@ def main(argv):
         # extract iterator over tweet text contents
         tt_iter = status.find('div', class_='tweet-content media-body').children
 
-        tweet_text += process_tweet_content(tt_iter, twit_account, status_id, full_status_url, get_vids)
+        tweet_text += process_media_body(tt_iter, twit_account, status_id, full_status_url, get_vids)
+
+        # TODO  Process quote: append link to tweet_text
+
+        # TODO  Process card : extract image or youtube link
+
+        # TODO  Process attachment: capture image or .mp4 url or download twitter video
 
         # Add footer with link to original tweet
         tweet_text += '\n\nOriginal tweet : ' + full_status_url
