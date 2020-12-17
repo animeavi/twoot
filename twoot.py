@@ -295,9 +295,14 @@ def main(argv):
         # Extract URL of full status page (for video download)
         full_status_url = 'https://twitter.com' + tweet_id
 
+        # Initialize tweet text
+        tweet_text = ''
+
         # TODO  Check if the tweet is a reply-to
         # <div class="replying-to">Replying to <a href="/tomwarren">@tomwarren</a></div>
-        being_replied_to = status.find('div', class_='replying-to').a.get_text()
+        replying_to_class = status.find('div', class_='replying-to')
+        if replying_to_class is not None:
+            tweet_text += 'Replying to ' + replying_to_class.a.get_text()
 
         # Check it the tweet is a retweet from somebody else
         if author_account.lower() != twit_account.lower():
