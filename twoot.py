@@ -31,7 +31,6 @@ import re
 from pathlib import Path
 from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalArgumentError
 import subprocess
-import json.decoder
 import shutil
 
 
@@ -48,7 +47,7 @@ logging.basicConfig(filename="twoot.log", level=logging.INFO)
 logging.info('*********** NEW RUN ***********')
 
 
-def cleanup_tweet_text(tt_iter, twit_account, status_id, tweet_uri, get_vids):
+def process_tweet_content(tt_iter, twit_account, status_id, tweet_uri, get_vids):
     '''
     Receives an iterator over all the elements contained in the tweet-text container.
     Processes them to remove Twitter-specific stuff and make them suitable for
@@ -155,6 +154,18 @@ def contains_class(body_classes, some_class):
 
     return found
 
+def is_time_valid(timestamp, max_age, min_delay):
+    ret = True
+    # Check that the tweet is not too young (might be deleted) or too old
+    age_in_hours = (time.time() - float(timestamp)) / 3600.0
+    min_delay_in_hours = min_delay / 60.0
+    max_age_in_hours = max_age * 24.0
+
+    if age_in_hours < min_delay_in_hours or age_in_hours > max_age_in_hours:
+        ret = False
+
+    return ret
+
 
 def main(argv):
 
@@ -237,13 +248,27 @@ def main(argv):
     # Extract twitter timeline
     timeline = soup.find_all('div', class_='timeline-item')
 
-    logging.info('Processing timeline')
+    logging.info('Processing ' + len(timeline) + ' tweets found in timeline')
+
+    # **********************************************************
+    # Process each tweets and generate dictionary
+    # with data ready to be posted on Mastodon
+    # **********************************************************
     for status in timeline:
         # Extract tweet ID and status ID
         tweet_id = status.find('a', class_='tweet-link').get('href').strip('#m')
         status_id = tweet_id.split('/')[3]
 
         logging.debug('processing tweet %s', tweet_id)
+
+        # Extract time stamp
+        time_string = status.find('span', class_='tweet-date').a.get('title')
+        timestamp = datetime.datetime.strptime(time_string, '%d/%m/%Y, %H:%M:%S').timestamp()
+
+        # Check if time is within acceptable range
+        if not is_time_valid(timestamp, max_age, min_delay):
+            logging.debug("Tweet outside valid time range, skipping")
+            continue
 
         # Check in database if tweet has already been posted
         db.execute("SELECT * FROM toots WHERE twitter_account=? AND mastodon_instance=? AND mastodon_account=? AND tweet_id=?",
@@ -257,19 +282,6 @@ def main(argv):
         else:
             logging.debug('Tweet %s not found in database', tweet_id)
 
-        reply_to_username = None
-        # TODO  Check if the tweet is a reply-to
-        reply_to_div = None
-        if reply_to_div is not None:
-            # Do we need to handle reply-to tweets?
-            if tweets_and_replies:
-                # TODO  Capture user name being replied to
-                pass
-            else:
-                # Skip this tweet
-                logging.debug("Tweet is a reply-to and we don't want that. Skipping.")
-                continue
-
         # extract author
         author = status.find('a', class_='fullname').get('title')
 
@@ -279,22 +291,16 @@ def main(argv):
         # Extract URL of full status page (for video download)
         full_status_url = 'https://twitter.com' + tweet_id
 
-        # Extract time stamp
-        time_string = status.find('span', class_='tweet-date').a.get('title')
-        timestamp = datetime.datetime.strptime(time_string, '%d/%m/%Y, %H:%M:%S').timestamp()
+        # TODO  Check if the tweet is a reply-to
+
+        # Check it the tweet is a retweet from somebody else
+        if author_account.lower() != twit_account.lower():
+            tweet_text = 'RT from ' + author + ' (@' + author_account + ')\n\n'
 
         # extract iterator over tweet text contents
         tt_iter = status.find('div', class_='tweet-content media-body').children
 
-        tweet_text = cleanup_tweet_text(tt_iter, twit_account, status_id, full_status_url, get_vids)
-
-        # Mention if the tweet is a reply-to
-        if reply_to_username is not None:
-            tweet_text = 'In reply to ' + reply_to_username + '\n\n' + tweet_text
-
-        # Check it the tweet is a retweet from somebody else
-        if author_account.lower() != twit_account.lower():
-            tweet_text = 'RT from ' + author + ' (@' + author_account + ')\n\n' + tweet_text
+        tweet_text += process_tweet_content(tt_iter, twit_account, status_id, full_status_url, get_vids)
 
         # Add footer with link to original tweet
         tweet_text += '\n\nOriginal tweet : ' + full_status_url
@@ -358,15 +364,17 @@ def main(argv):
         }
         tweets.append(tweet)
 
-        logging.debug('Tweet %s added to list to upload', tweet_id)
+        logging.debug('Tweet %s added to list of toots to upload', tweet_id)
+
+    # TODO  Log summary stats: how many not in db, how many in valid timeframe
 
     # DEBUG: Print extracted tweets
-#    for t in tweets:
-#         print(t)
+    #for t in tweets:
+    #print(t)
 
     # **********************************************************
     # Iterate tweets in list.
-    # post each on Mastodon and reference to it in database
+    # post each on Mastodon and record it in database
     # **********************************************************
 
     # Create Mastodon application if it does not exist yet
@@ -396,22 +404,12 @@ def main(argv):
         )
 
     except MastodonError as me:
-        print('ERROR: Login to ' + mast_instance + ' Failed')
-        print(me)
+        logging.fatal('ERROR: Login to ' + mast_instance + ' Failed\n' + me)
         sys.exit(1)
 
     # Upload tweets
     for tweet in reversed(tweets):
         logging.debug('Uploading Tweet %s', tweet["tweet_id"])
-        # Check that the tweet is not too young (might be deleted) or too old
-        age_in_hours = (time.time() - float(tweet['timestamp'])) / 3600.0
-        min_delay_in_hours = min_delay / 60.0
-        max_age_in_hours = max_age * 24.0
-
-        if age_in_hours < min_delay_in_hours or age_in_hours > max_age_in_hours:
-            # Skip to next tweet
-            logging.debug("Tweet too young or too old, skipping")
-            continue
 
         media_ids = []
 
@@ -444,7 +442,6 @@ def main(argv):
                         pass
 
         # Post toot
-        logging.debug('Doing it now')
         try:
             mastodon = Mastodon(
                 access_token=mast_account + '.secret',
