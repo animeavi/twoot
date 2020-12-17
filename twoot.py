@@ -222,6 +222,10 @@ def main(argv):
     )
 
     url = 'https://nitter.net/' + twit_account
+    # Use different page if we need to handle replies
+    if tweets_and_replies:
+        url += '/with_replies'
+
     # Download twitter page of user.
     twit_account_page = session.get(url, headers=headers)
 
@@ -248,7 +252,7 @@ def main(argv):
     # Extract twitter timeline
     timeline = soup.find_all('div', class_='timeline-item')
 
-    logging.info('Processing ' + len(timeline) + ' tweets found in timeline')
+    logging.info('Processing ' + str(len(timeline)) + ' tweets found in timeline')
 
     # **********************************************************
     # Process each tweets and generate dictionary
@@ -292,6 +296,8 @@ def main(argv):
         full_status_url = 'https://twitter.com' + tweet_id
 
         # TODO  Check if the tweet is a reply-to
+        # <div class="replying-to">Replying to <a href="/tomwarren">@tomwarren</a></div>
+        being_replied_to = status.find('div', class_='replying-to').a.get_text()
 
         # Check it the tweet is a retweet from somebody else
         if author_account.lower() != twit_account.lower():
