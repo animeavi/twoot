@@ -298,7 +298,7 @@ def main(argv):
         # Initialize tweet text
         tweet_text = ''
 
-        # TODO  Check if the tweet is a reply-to
+        # Add prefix if the tweet is a reply-to
         # <div class="replying-to">Replying to <a href="/tomwarren">@tomwarren</a></div>
         replying_to_class = status.find('div', class_='replying-to')
         if replying_to_class is not None:
