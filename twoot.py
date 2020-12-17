@@ -104,9 +104,9 @@ def cleanup_tweet_text(tt_iter, twit_account, status_id, tweet_uri, get_vids):
                                         tweet_text += '\n\n[Video embedded in original tweet]'
                                 except OSError:
                                     logging.error("Could not execute twitterdl.py (is it there? Is it set as executable?)")
-                                    sys.exit(-1)
                                 except subprocess.TimeoutExpired:
                                     # Video download and encoding took too long
+                                    logging.error("twitterdl.py execution timed out")
                                     tweet_text += '\n\n[Video embedded in original tweet]'
                             else:
                                 tweet_text += '\n\n[Video embedded in original tweet]'
@@ -137,7 +137,7 @@ def cleanup_tweet_text(tt_iter, twit_account, status_id, tweet_uri, get_vids):
             pass
 
         else:
-            print("*** WARNING: No handler for tag in twitter text: " + tag.prettify())
+            logging.warning("No handler for tag in twitter text: " + tag.prettify())
 
     return tweet_text
 
@@ -349,7 +349,6 @@ def main(argv):
         tweet = {
             "author": author,
             "author_account": author_account,
-            "author_logo_url": author_logo_url,
             "timestamp": timestamp,
             "tweet_id": tweet_id,
             "tweet_text": tweet_text,
