@@ -96,10 +96,11 @@ def process_card(card_container):
     return list
 
 
-def process_attachments(attachments_container, twit_account, tweet_id, author_account):
+def process_attachments(attachments_container, get_vids, twit_account, tweet_id, author_account):
     """
     Extract images or video from attachments. Videos are downloaded on the file system.
     :param card_container: soup of 'div' tag containing attachments markup
+    :param get_vids: whether to download vids or not
     :param twit_account: name of twitter account
     :param tweet_id: id of tweet being processed
     :param author_account: author of tweet with video attachment
@@ -116,24 +117,43 @@ def process_attachments(attachments_container, twit_account, tweet_id, author_ac
     if gif_class is not None:
         gif_video_file = 'https://nitter.com' + gif_class.source.get('src')
 
-    video_path = os.path.join('./output', twit_account, tweet_id, author_account, tweet_id)
-    os.makedirs(video_path, 0o777, exist_ok=True)
+        video_path = os.path.join('./output', twit_account, tweet_id, author_account, tweet_id)
+        os.makedirs(video_path, 0o777, exist_ok=True)
 
-    # Open directory for writing file
-    vp = os.open(video_path,  os.O_WRONLY)
-    os.fchdir(vp)
-    r = requests.get(gif_video_file, stream=True)
+        # Open directory for writing file
+        vp = os.open(video_path,  os.O_WRONLY)
+        os.fchdir(vp)
+        r = requests.get(gif_video_file, stream=True)
 
-    # Download chunks and write them to file
-    with open('gif_video.mp4', 'wb') as f:
-        for chunk in r.iter_content(chunk_size=16*1024):
-            f.write(chunk)
+        # Download chunks and write them to file
+        with open('gif_video.mp4', 'wb') as f:
+            for chunk in r.iter_content(chunk_size=16*1024):
+                f.write(chunk)
 
-    # Close directory
-    os.close(vp)
+        # Close directory
+        os.close(vp)
 
-    # TODO Download twitter video
-
+    # Download twitter video
+    vid_class = attachments_container.find('div', class_='video-container')
+    if vid_class is not None:
+        video_file = 'https://twitter.com' + vid_class.video.get('data-url')
+        if get_vids:
+            # Download video from twitter and store in filesystem. Running as subprocess to avoid
+            # requirement to install ffmpeg and ffmpeg-python for those that do not want to post videos
+            try:
+                # Set output location to ./output/twit_account/status_id
+                dl_feedback = subprocess.run(
+                    ["./twitterdl.py", tweet_uri, "-ooutput/" + twit_account + "/" + status_id, "-w 500"],
+                    capture_output=True,
+                )
+                if dl_feedback.returncode != 0:
+                    logging.warning('Video in tweet ' + tweet_id + ' from ' + twit_account + ' failed to download')
+                    tweet_text += '\n\n[Video embedded in original tweet]'
+            except OSError:
+                logging.fatal("Could not execute twitterdl.py (is it there? Is it set as executable?)")
+                sys.exit(-1)
+        else:
+            tweet_text += '\n\n[Video embedded in original tweet]'
 
     return pics
 
@@ -324,7 +344,7 @@ def main(argv):
         # TODO  Process attachment: capture image or .mp4 url or download twitter video
         attachments_class = status.find('a', class_='attachments')
         if attachments_class is not None:
-            photos.extend(process_attachments(attachments_class, twit_account, tweet_id, author_account))
+            photos.extend(process_attachments(attachments_class, get_vids, twit_account, tweet_id, author_account))
 
         # Add footer with link to original tweet
         tweet_text += '\n\nOriginal tweet : ' + full_status_url
