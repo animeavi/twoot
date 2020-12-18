@@ -85,9 +85,9 @@ def process_card(card_container):
     link = card_container.get('href')
 
     # Do not extract image for youtube links
-    image_url = 'twitter.com' + card_container.div.div.img.get('src')
+    image_url = 'https://nitter.net' + card_container.div.div.img.get('src')
     list.append(image_url)
-    logging.debug('Extracted still image of dailymotion video from card')
+    logging.debug('Extracted image from card')
 
     return list
 
@@ -106,7 +106,7 @@ def process_attachments(attachments_container, get_vids, twit_account, tweet_id,
     pics = []
     images = attachments_container.find_all('a', class_='still-image')
     for image in images:
-        pics.append(image.get('href'))
+        pics.append('https://nitter.net' + image.get('href'))
 
     logging.debug('collected ' + str(len(pics)) + ' images from attachments')
 
@@ -212,17 +212,22 @@ def main(argv):
     max_age = float(args['a'])
     min_delay = float(args['d'])
 
+    # Remove previous log file
+    try:
+        os.remove(twit_account + '.log')
+    except FileNotFoundError:
+        pass
+
     # Setup logging to file
-    os.remove(twit_account + '.log')
     logging.basicConfig(filename=twit_account + '.log', level=logging.DEBUG)
     logging.info('Running with the following parameters:')
     logging.info('    -t ' + twit_account)
     logging.info('    -i ' + mast_instance)
     logging.info('    -m ' + mast_account)
-    logging.info('    -r ' + tweets_and_replies)
-    logging.info('    -v ' + get_vids)
-    logging.info('    -a ' + max_age)
-    logging.info('    -d ' + min_delay)
+    logging.info('    -r ' + str(tweets_and_replies))
+    logging.info('    -v ' + str(get_vids))
+    logging.info('    -a ' + str(max_age))
+    logging.info('    -d ' + str(min_delay))
 
     # Try to open database. If it does not exist, create it
     sql = sqlite3.connect('twoot.db')
