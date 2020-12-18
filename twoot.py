@@ -338,7 +338,7 @@ def main(argv):
         # Add prefix if the tweet is a reply-to
         replying_to_class = status.find('div', class_='replying-to')
         if replying_to_class is not None:
-            tweet_text += 'Replying to ' + replying_to_class.a.get_text()
+            tweet_text += 'Replying to ' + replying_to_class.a.get_text() + '\n\n'
 
         # Check it the tweet is a retweet from somebody else
         if author_account.lower() != twit_account.lower():
@@ -456,6 +456,7 @@ def main(argv):
             password=mast_password,
             to_file=mast_account + ".secret"
         )
+        logging.info('Logging in to ' + mast_instance)
 
     except MastodonError as me:
         logging.fatal('ERROR: Login to ' + mast_instance + ' Failed\n')
