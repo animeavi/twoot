@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-    Copyright (C) 2019  Jean-Christophe Francois
+    Copyright (C) 2020  Jean-Christophe Francois
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -220,7 +220,7 @@ def main(argv):
         pass
 
     # Setup logging to file
-    logging.basicConfig(filename=twit_account + '.log', level=logging.DEBUG)
+    logging.basicConfig(filename=twit_account + '.log', level=logging.INFO)
     logging.info('Running with the following parameters:')
     logging.info('    -t ' + twit_account)
     logging.info('    -i ' + mast_instance)
@@ -273,9 +273,9 @@ def main(argv):
     logging.info('Nitter page downloaded successfully')
 
     # DEBUG: Save page to file
-    of = open(twit_account + '.html', 'w')
-    of.write(twit_account_page.text)
-    of.close()
+    #of = open(twit_account + '.html', 'w')
+    #of.write(twit_account_page.text)
+    #of.close()
 
     # Make soup
     soup = BeautifulSoup(twit_account_page.text, 'html.parser')
@@ -295,6 +295,8 @@ def main(argv):
     # Process each tweets and generate dictionary
     # with data ready to be posted on Mastodon
     # **********************************************************
+    out_date_cnt = 0
+    in_db_cnt = 0
     for status in timeline:
         # Extract tweet ID and status ID
         tweet_id = status.find('a', class_='tweet-link').get('href').strip('#m')
@@ -308,6 +310,7 @@ def main(argv):
 
         # Check if time is within acceptable range
         if not is_time_valid(timestamp, max_age, min_delay):
+            out_date_cnt += 1
             logging.debug("Tweet outside valid time range, skipping")
             continue
 
@@ -317,6 +320,7 @@ def main(argv):
         tweet_in_db = db.fetchone()
 
         if tweet_in_db is not None:
+            in_db_cnt += 1
             logging.debug("Tweet %s already in database", tweet_id)
             # Skip to next tweet
             continue
@@ -425,6 +429,8 @@ def main(argv):
         logging.debug('Tweet %s added to list of toots to upload', tweet_id)
 
     # TODO  Log summary stats: how many not in db, how many in valid timeframe
+    logging.info(str(out_date_cnt) + ' tweets outside of valid time range')
+    logging.info(str(in_db_cnt) + ' tweets already in database')
 
     # DEBUG: Print extracted tweets
     #for t in tweets:
@@ -467,6 +473,7 @@ def main(argv):
         sys.exit(1)
 
     # Upload tweets
+    posted_cnt = 0
     for tweet in reversed(tweets):
         logging.debug('Uploading Tweet %s', tweet["tweet_id"])
 
@@ -515,15 +522,18 @@ def main(argv):
         except MastodonError as me:
             logging.error('posting ' + tweet['tweet_text'] + ' to ' + mast_instance + ' Failed')
             logging.error(me)
-            sys.exit(1)
 
-        logging.debug('Tweet %s posted on %s', tweet_id, mast_account)
+        else:
+            posted_cnt += 1
+            logging.debug('Tweet %s posted on %s', tweet['tweet_id'], mast_account)
 
         # Insert toot id into database
         if 'id' in toot:
             db.execute("INSERT INTO toots VALUES ( ? , ? , ? , ? , ? )",
                        (twit_account, mast_instance, mast_account, tweet['tweet_id'], toot['id']))
             sql.commit()
+
+    logging.info(str(posted_cnt) + ' Tweets posted to Mastodon')
 
     # Cleanup downloaded video files
     try:
