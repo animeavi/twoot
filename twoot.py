@@ -42,10 +42,6 @@ USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36 Edg/87.0.664.60',
     ]
 
-# Setup logging to file
-logging.basicConfig(filename="twoot.log", level=logging.DEBUG)
-logging.info('*********** NEW RUN ***********')
-
 
 def process_media_body(tt_iter):
     """
@@ -88,11 +84,10 @@ def process_card(card_container):
     list = []
     link = card_container.get('href')
 
-    # Dailymotion
-    if link.find('dailymotion.com') >= 0:
-        image_url = 'twitter.com' + card_container.div.div.img.get('src')
-        list.append(image_url)
-        logging.debug('Extracted still image of dailymotion video from card')
+    # Do not extract image for youtube links
+    image_url = 'twitter.com' + card_container.div.div.img.get('src')
+    list.append(image_url)
+    logging.debug('Extracted still image of dailymotion video from card')
 
     return list
 
@@ -217,7 +212,17 @@ def main(argv):
     max_age = float(args['a'])
     min_delay = float(args['d'])
 
-    logging.info('Updating ' + twit_account + ' on ' + mast_instance)
+    # Setup logging to file
+    os.remove(twit_account + '.log')
+    logging.basicConfig(filename=twit_account + '.log', level=logging.DEBUG)
+    logging.info('Running with the following parameters:')
+    logging.info('    -t ' + twit_account)
+    logging.info('    -i ' + mast_instance)
+    logging.info('    -m ' + mast_account)
+    logging.info('    -r ' + tweets_and_replies)
+    logging.info('    -v ' + get_vids)
+    logging.info('    -a ' + max_age)
+    logging.info('    -d ' + min_delay)
 
     # Try to open database. If it does not exist, create it
     sql = sqlite3.connect('twoot.db')
@@ -431,7 +436,7 @@ def main(argv):
             )
 
         except MastodonError as me:
-            print('failed to create app on ' + mast_instance)
+            logging.fatal('failed to create app on ' + mast_instance + '\n' + str(me))
             sys.exit(1)
 
     # Log in to Mastodon instance
@@ -448,7 +453,7 @@ def main(argv):
         )
 
     except MastodonError as me:
-        logging.fatal('ERROR: Login to ' + mast_instance + ' Failed\n' + me)
+        logging.fatal('ERROR: Login to ' + mast_instance + ' Failed\n')
         sys.exit(1)
 
     # Upload tweets
