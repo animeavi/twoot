@@ -64,10 +64,10 @@ def process_media_body(tt_iter):
         # If it is an 'a' html tag
         elif tag.name == 'a':
             tag_text = tag.get_text()
-            if tag_text.starts_with('@'):
+            if tag_text.startswith('@'):
                 # Only keep user name
                 tweet_text += tag_text
-            elif tag_text.starts_with('#'):
+            elif tag_text.startswith('#'):
                 # Only keep hashtag text
                 tweet_text += tag_text
             else:
@@ -89,7 +89,7 @@ def process_card(card_container):
     link = card_container.get('href')
 
     # Dailymotion
-    if link.contains('dailymotion.com'):
+    if link.find('dailymotion.com') >= 0:
         image_url = 'twitter.com' + card_container.div.div.img.get('src')
         list.append(image_url)
         logging.debug('Extracted still image of dailymotion video from card')
@@ -112,7 +112,8 @@ def process_attachments(attachments_container, get_vids, twit_account, tweet_id,
     images = attachments_container.find_all('a', class_='still-image')
     for image in images:
         pics.append(image.get('href'))
-        logging.debug('collected ' + str(len(pics)) + ' images from attachments')
+
+    logging.debug('collected ' + str(len(pics)) + ' images from attachments')
 
     # Download nitter video (converted animated GIF)
     gif_class = attachments_container.find('video', class_='gif')
@@ -350,7 +351,7 @@ def main(argv):
             photos.extend(process_card(card_class))
 
         # Process attachment: capture image or .mp4 url or download twitter video
-        attachments_class = status.find('a', class_='attachments')
+        attachments_class = status.find('div', class_='attachments')
         if attachments_class is not None:
             photos.extend(process_attachments(attachments_class, get_vids, twit_account, tweet_id, author_account))
 
