@@ -96,10 +96,13 @@ def process_card(card_container):
     return list
 
 
-def process_attachments(attachments_container):
+def process_attachments(attachments_container, twit_account, tweet_id, author_account):
     """
     Extract images or video from attachments. Videos are downloaded on the file system.
     :param card_container: soup of 'div' tag containing attachments markup
+    :param twit_account: name of twitter account
+    :param tweet_id: id of tweet being processed
+    :param author_account: author of tweet with video attachment
     :return: list with url of images
     """
     # Collect url of images
@@ -108,9 +111,29 @@ def process_attachments(attachments_container):
     for image in images:
         pics.append(image.get('href'))
 
-    # TODO Download nitter video (converted animated GIF)
+    # Download nitter video (converted animated GIF)
+    gif_class = attachments_container.find('video', class_='gif')
+    if gif_class is not None:
+        gif_video_file = 'https://nitter.com' + gif_class.source.get('src')
+
+    video_path = os.path.join('./output', twit_account, tweet_id, author_account, tweet_id)
+    os.makedirs(video_path, 0o777, exist_ok=True)
+
+    # Open directory for writing file
+    vp = os.open(video_path,  os.O_WRONLY)
+    os.fchdir(vp)
+    r = requests.get(gif_video_file, stream=True)
+
+    # Download chunks and write them to file
+    with open('gif_video.mp4', 'wb') as f:
+        for chunk in r.iter_content(chunk_size=16*1024):
+            f.write(chunk)
+
+    # Close directory
+    os.close(vp)
 
     # TODO Download twitter video
+
 
     return pics
 
@@ -301,7 +324,7 @@ def main(argv):
         # TODO  Process attachment: capture image or .mp4 url or download twitter video
         attachments_class = status.find('a', class_='attachments')
         if attachments_class is not None:
-            photos.extend(process_attachments(attachments_class))
+            photos.extend(process_attachments(attachments_class, twit_account, tweet_id, author_account))
 
         # Add footer with link to original tweet
         tweet_text += '\n\nOriginal tweet : ' + full_status_url
