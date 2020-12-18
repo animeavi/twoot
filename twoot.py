@@ -356,9 +356,9 @@ def main(argv):
         tweet_text += process_media_body(tt_iter)
 
         # Process quote: append link to tweet_text
-        quote_div = status.find('div', class_='quote-link')
+        quote_div = status.find('a', class_='quote-link')
         if quote_div is not None:
-            tweet_text += '\n twitter.com' + quote_div.get('href').strip('#m')
+            tweet_text += '\n\nhttps://twitter.com' + quote_div.get('href').strip('#m')
 
         # Process card : extract image if necessary
         card_class = status.find('a', class_='card-container')
