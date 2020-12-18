@@ -43,7 +43,7 @@ USER_AGENTS = [
     ]
 
 # Setup logging to file
-logging.basicConfig(filename="twoot.log", level=logging.INFO)
+logging.basicConfig(filename="twoot.log", level=logging.DEBUG)
 logging.info('*********** NEW RUN ***********')
 
 
@@ -92,6 +92,7 @@ def process_card(card_container):
     if link.contains('dailymotion.com'):
         image_url = 'twitter.com' + card_container.div.div.img.get('src')
         list.append(image_url)
+        logging.debug('Extracted still image of dailymotion video from card')
 
     return list
 
@@ -111,6 +112,7 @@ def process_attachments(attachments_container, get_vids, twit_account, tweet_id,
     images = attachments_container.find_all('a', class_='still-image')
     for image in images:
         pics.append(image.get('href'))
+        logging.debug('collected ' + str(len(pics)) + ' images from attachments')
 
     # Download nitter video (converted animated GIF)
     gif_class = attachments_container.find('video', class_='gif')
@@ -129,6 +131,8 @@ def process_attachments(attachments_container, get_vids, twit_account, tweet_id,
         with open('gif_video.mp4', 'wb') as f:
             for chunk in r.iter_content(chunk_size=16*1024):
                 f.write(chunk)
+
+        logging.debug('downloaded video of GIF animation from attachments')
 
         # Close directory
         os.close(vp)
@@ -149,6 +153,9 @@ def process_attachments(attachments_container, get_vids, twit_account, tweet_id,
                 if dl_feedback.returncode != 0:
                     logging.warning('Video in tweet ' + tweet_id + ' from ' + twit_account + ' failed to download')
                     tweet_text += '\n\n[Video embedded in original tweet]'
+                else:
+                    logging.debug('downloaded twitter video from attachments')
+
             except OSError:
                 logging.fatal("Could not execute twitterdl.py (is it there? Is it set as executable?)")
                 sys.exit(-1)
@@ -247,10 +254,11 @@ def main(argv):
     twit_account_page = session.get(url, headers=headers)
 
     # Verify that download worked
-    assert twit_account_page.status_code == 200,\
-        'The nitter page did not download correctly. Aborting'
+    if twit_account_page.status_code != 200:
+        logging.fatal('The Nitter page did not download correctly. Aborting')
+        exit(-1)
 
-    logging.info('Page downloaded successfully')
+    logging.info('Nitter page downloaded successfully')
 
     # DEBUG: Save page to file
     of = open(twit_account + '.html', 'w')
@@ -341,7 +349,7 @@ def main(argv):
         if card_class is not None:
             photos.extend(process_card(card_class))
 
-        # TODO  Process attachment: capture image or .mp4 url or download twitter video
+        # Process attachment: capture image or .mp4 url or download twitter video
         attachments_class = status.find('a', class_='attachments')
         if attachments_class is not None:
             photos.extend(process_attachments(attachments_class, get_vids, twit_account, tweet_id, author_account))
