@@ -48,12 +48,12 @@ logging.info('*********** NEW RUN ***********')
 
 
 def process_media_body(tt_iter):
-    '''
+    """
     Receives an iterator over all the elements contained in the tweet-text container.
     Processes them to make them suitable for posting on Mastodon
     :param tt_iter: iterator over the HTML elements in the text of the tweet
     :return:        cleaned up text of the tweet
-    '''
+    """
     tweet_text = ''
     # Iterate elements
     for tag in tt_iter:
@@ -80,11 +80,11 @@ def process_media_body(tt_iter):
 
 
 def process_card(card_container):
-    '''
+    """
     Extract image from card in case mastodon does not do it
     :param card_container: soup of 'a' tag containing card markup
     :return: list with url of image
-    '''
+    """
     list = []
     link = card_container.get('href')
 
@@ -95,12 +95,32 @@ def process_card(card_container):
 
     return list
 
+
+def process_attachments(attachments_container):
+    """
+    Extract images or video from attachments. Videos are downloaded on the file system.
+    :param card_container: soup of 'div' tag containing attachments markup
+    :return: list with url of images
+    """
+    # Collect url of images
+    pics = []
+    images = attachments_container.find_all('a', class_='still-image')
+    for image in images:
+        pics.append(image.get('href'))
+
+    # TODO Download nitter video (converted animated GIF)
+
+    # TODO Download twitter video
+
+    return pics
+
+
 def contains_class(body_classes, some_class):
-    '''
+    """
     :param body_classes: list of classes to search
     :param some_class: class that we are interested in
     :return: True if found, false otherwise
-    '''
+    """
     found = False
     for body_class in body_classes:
         if body_class == some_class:
@@ -280,19 +300,11 @@ def main(argv):
 
         # TODO  Process attachment: capture image or .mp4 url or download twitter video
         attachments_class = status.find('a', class_='attachments')
-        if card_class is not None:
+        if attachments_class is not None:
             photos.extend(process_attachments(attachments_class))
 
         # Add footer with link to original tweet
         tweet_text += '\n\nOriginal tweet : ' + full_status_url
-
-
-        # Check if there are photos attached
-        media = status.find('div', class_='media')
-        if media:
-            # Extract photo url and add it to list
-            pic = str(media.img['src']).strip(':small')
-            photos.append(pic)
 
         # If no media was specifically added in the tweet, try to get the first picture
         # with "twitter:image" meta tag in first linked page in tweet text
