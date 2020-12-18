@@ -82,12 +82,12 @@ def process_card(card_container):
     :return: list with url of image
     """
     list = []
-    link = card_container.get('href')
 
-    # Do not extract image for youtube links
-    image_url = 'https://nitter.net' + card_container.div.div.img.get('src')
-    list.append(image_url)
-    logging.debug('Extracted image from card')
+    img = card_container.div.div.img
+    if img is not None:
+        image_url = 'https://nitter.net' + img.get('src')
+        list.append(image_url)
+        logging.debug('Extracted image from card')
 
     return list
 
