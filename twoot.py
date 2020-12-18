@@ -220,7 +220,7 @@ def main(argv):
         pass
 
     # Setup logging to file
-    logging.basicConfig(filename=twit_account + '.log', level=logging.INFO)
+    logging.basicConfig(filename=twit_account + '.log', level=logging.DEBUG)
     logging.info('Running with the following parameters:')
     logging.info('    -t ' + twit_account)
     logging.info('    -i ' + mast_instance)
