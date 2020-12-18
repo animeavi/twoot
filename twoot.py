@@ -92,13 +92,13 @@ def process_card(card_container):
     return list
 
 
-def process_attachments(attachments_container, get_vids, twit_account, tweet_id, author_account):
+def process_attachments(attachments_container, get_vids, twit_account, status_id, author_account):
     """
     Extract images or video from attachments. Videos are downloaded on the file system.
     :param card_container: soup of 'div' tag containing attachments markup
     :param get_vids: whether to download vids or not
     :param twit_account: name of twitter account
-    :param tweet_id: id of tweet being processed
+    :param status_id: id of tweet being processed
     :param author_account: author of tweet with video attachment
     :return: list with url of images
     """
@@ -115,12 +115,12 @@ def process_attachments(attachments_container, get_vids, twit_account, tweet_id,
     if gif_class is not None:
         gif_video_file = 'https://nitter.com' + gif_class.source.get('src')
 
-        video_path = os.path.join('./output', twit_account, tweet_id, author_account, tweet_id)
-        os.makedirs(video_path, 0o777, exist_ok=True)
+        video_path = os.path.join('output', twit_account, status_id, author_account, status_id)
+        os.makedirs(video_path, exist_ok=True)
 
         # Open directory for writing file
-        vp = os.open(video_path,  os.O_WRONLY)
-        os.fchdir(vp)
+        vp = os.open(video_path, os.O_WRONLY)
+        os.chdir(vp)
         r = requests.get(gif_video_file, stream=True)
 
         # Download chunks and write them to file
@@ -252,7 +252,7 @@ def main(argv):
     headers.update(
         {
             'User-Agent': USER_AGENTS[random.randint(0, len(USER_AGENTS)-1)],
-            'Cookie': 'replaceTwitter=; replaceYouTube=',
+            'Cookie': 'replaceTwitter=; replaceYouTube=; hlsPlayback=on; proxyVideos=',
         }
     )
 
@@ -363,7 +363,7 @@ def main(argv):
         # Process attachment: capture image or .mp4 url or download twitter video
         attachments_class = status.find('div', class_='attachments')
         if attachments_class is not None:
-            photos.extend(process_attachments(attachments_class, get_vids, twit_account, tweet_id, author_account))
+            photos.extend(process_attachments(attachments_class, get_vids, twit_account, status_id, author_account))
 
         # Add footer with link to original tweet
         tweet_text += '\n\nOriginal tweet : ' + full_status_url
