@@ -451,7 +451,8 @@ def main(argv):
             )
 
         except MastodonError as me:
-            logging.fatal('failed to create app on ' + mast_instance + '\n' + str(me))
+            logging.fatal('failed to create app on ' + mast_instance)
+            logging.fatal(me)
             sys.exit(1)
 
     # Log in to Mastodon instance
@@ -470,6 +471,7 @@ def main(argv):
 
     except MastodonError as me:
         logging.fatal('ERROR: Login to ' + mast_instance + ' Failed\n')
+        logging.fatal(me)
         sys.exit(1)
 
     # Upload tweets
