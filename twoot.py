@@ -113,42 +113,43 @@ def process_attachments(attachments_container, get_vids, twit_account, status_id
     # Download nitter video (converted animated GIF)
     gif_class = attachments_container.find('video', class_='gif')
     if gif_class is not None:
-        gif_video_file = 'https://nitter.com' + gif_class.source.get('src')
+        gif_video_file = 'https://nitter.net' + gif_class.source.get('src')
 
         video_path = os.path.join('output', twit_account, status_id, author_account, status_id)
         os.makedirs(video_path, exist_ok=True)
 
         # Open directory for writing file
-        vp = os.open(video_path, os.O_WRONLY)
-        os.chdir(vp)
-        r = requests.get(gif_video_file, stream=True)
-
-        # Download chunks and write them to file
-        with open('gif_video.mp4', 'wb') as f:
-            for chunk in r.iter_content(chunk_size=16*1024):
-                f.write(chunk)
+        orig_dir = os.getcwd()
+        os.chdir(video_path)
+        with requests.get(gif_video_file, stream=True) as r:
+            r.raise_for_status()
+            # Download chunks and write them to file
+            with open('gif_video.mp4', 'wb') as f:
+                for chunk in r.iter_content(chunk_size=16*1024):
+                    f.write(chunk)
 
         logging.debug('downloaded video of GIF animation from attachments')
 
         # Close directory
-        os.close(vp)
+        os.chdir(orig_dir)
 
     # Download twitter video
+    vid_in_tweet = False
     vid_class = attachments_container.find('div', class_='video-container')
     if vid_class is not None:
-        video_file = 'https://twitter.com' + vid_class.video.get('data-url')
+        video_file = os.path.join('https://twitter.com', author_account, 'status', status_id)
         if get_vids:
             # Download video from twitter and store in filesystem. Running as subprocess to avoid
             # requirement to install ffmpeg and ffmpeg-python for those that do not want to post videos
             try:
                 # Set output location to ./output/twit_account/status_id
                 dl_feedback = subprocess.run(
-                    ["./twitterdl.py", tweet_uri, "-ooutput/" + twit_account + "/" + status_id, "-w 500"],
+                    ["./twitterdl.py", video_file, "-ooutput/" + twit_account + "/" + status_id, "-w 500"],
                     capture_output=True,
                 )
                 if dl_feedback.returncode != 0:
-                    logging.warning('Video in tweet ' + tweet_id + ' from ' + twit_account + ' failed to download')
-                    tweet_text += '\n\n[Video embedded in original tweet]'
+                    logging.warning('Video in tweet ' + status_id + ' from ' + twit_account + ' failed to download')
+                    vid_in_tweet = True
                 else:
                     logging.debug('downloaded twitter video from attachments')
 
@@ -156,9 +157,9 @@ def process_attachments(attachments_container, get_vids, twit_account, status_id
                 logging.fatal("Could not execute twitterdl.py (is it there? Is it set as executable?)")
                 sys.exit(-1)
         else:
-            tweet_text += '\n\n[Video embedded in original tweet]'
+            vid_in_tweet = True
 
-    return pics
+    return pics, vid_in_tweet
 
 
 def contains_class(body_classes, some_class):
@@ -363,7 +364,10 @@ def main(argv):
         # Process attachment: capture image or .mp4 url or download twitter video
         attachments_class = status.find('div', class_='attachments')
         if attachments_class is not None:
-            photos.extend(process_attachments(attachments_class, get_vids, twit_account, status_id, author_account))
+            pics, vid_in_tweet = process_attachments(attachments_class, get_vids, twit_account, status_id, author_account)
+            photos.extend(pics)
+            if vid_in_tweet:
+                tweet_text += '\n\n[Video embedded in original tweet]'
 
         # Add footer with link to original tweet
         tweet_text += '\n\nOriginal tweet : ' + full_status_url
