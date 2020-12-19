@@ -547,7 +547,7 @@ def main(argv):
         pass
 
     logging.info('Run time : %2.1f seconds' % (time.time() - start_time))
-    logging.info('_____________________________________________________________')
+    logging.info('_____________________________________________________________________________________')
 
 
 if __name__ == "__main__":
