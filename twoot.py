@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-    Copyright (C) 2019  Jean-Christophe Francois
+    Copyright (C) 2020  Jean-Christophe Francois
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,79 +26,31 @@ import random
 import requests
 from bs4 import BeautifulSoup, element
 import sqlite3
-import datetime, time
+import datetime
+import time
 import re
 from pathlib import Path
 from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalArgumentError
 import subprocess
-import json.decoder
 import shutil
 
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
 USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:54.0) Gecko/20100101 Firefox/73.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13 Safari/605.1.15',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; Xbox; Xbox One) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36 Edge/44.18363.8131',
+    'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.1 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36 Edg/87.0.664.60',
     ]
 
-# Setup logging to file
-logging.basicConfig(filename="twoot.log", level=logging.WARNING)
-logging.debug('*********** NEW RUN ***********')
 
-def handle_no_js(session, page, headers):
+def process_media_body(tt_iter):
     """
-    Check if page is a "No Javascript" page instead of the content that we wanted
-    If it is, submit the form on the page as POST request to get the correct page and return it
-    :param session: current requests session
-    :param page: Response object to check
-    :param headers: HTTP headers used in initial request
-    :return: correct page (Response object)
-    """
-    # DEBUG: Save page to file
-    #of = open('no_js_page.html', 'w')
-    #of.write(page.text)
-    #of.close()
-
-    # Set default return value
-    new_page = page
-
-    # Make soup
-    soup = BeautifulSoup(page.text, 'html.parser')
-
-    if soup.form.p is not None:
-        if 'JavaScript is disabled' in str(soup.form.p.string):
-            # Submit POST form response with cookies
-            headers.update(
-                {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Referer': page.request.url,
-                }
-            )
-
-            action = soup.form.get('action')
-
-            # Submit the form
-            new_page = session.post(action, headers=headers, cookies=page.cookies)
-
-            # Verify that download worked
-            assert (new_page.status_code == 200), 'The twitter page did not download correctly. Aborting'
-
-    return new_page
-
-
-def cleanup_tweet_text(tt_iter, twit_account, status_id, tweet_uri, get_vids):
-    '''
     Receives an iterator over all the elements contained in the tweet-text container.
-    Processes them to remove Twitter-specific stuff and make them suitable for
-    posting on Mastodon
+    Processes them to make them suitable for posting on Mastodon
     :param tt_iter: iterator over the HTML elements in the text of the tweet
-    :param twit_account: Used to name directory where videos are downloaded
-    :param status_id: Used to name directory where videos are downloaded
-    :param tweet_uri: Used to downloaded videos
-    :param get_vids: True to download embedded twitter videos and save them on the filesystem
-    '''
+    :return:        cleaned up text of the tweet
+    """
     tweet_text = ''
     # Iterate elements
     for tag in tt_iter:
@@ -107,87 +59,116 @@ def cleanup_tweet_text(tt_iter, twit_account, status_id, tweet_uri, get_vids):
             tweet_text += tag.string
 
         # If it is an 'a' html tag
-        elif tag.name == 'a' and tag.has_attr('class'):
-            # If element is a #hashtag, only keep text
-            for tc in tag['class']:
-                if tc == 'twitter-hashtag':
-                    tweet_text += tag.get_text()
-
-                # If element is a mention of @someuser, only keep text
-                elif tc == 'twitter-atreply':
-                    tweet_text += tag.get_text()
-
-                # If element is an external link
-                elif tc == 'twitter_external_link':
-                    # If element is a simple link
-                    if tag.has_attr('data-expanded-url'):
-                        # Add a sometimes missing space before url
-                        if not tweet_text.endswith(' ') and not tweet_text.endswith('\n'):
-                            tweet_text += ' '
-                        # Add full url
-                        tweet_text += tag['data-expanded-url']
-                    if tag.has_attr('data-expanded-path'):
-                        data_expanded_path = tag['data-expanded-path']
-                        if 'video' in data_expanded_path:
-                            if get_vids:
-                                # Download video from twitter and store in filesystem. Running as subprocess to avoid
-                                # requirement to install ffmpeg and ffmpeg-python for those that do not want to post videos
-                                try:
-                                    # Set output location to ./output/twit_account/status_id
-                                    dl_feedback = subprocess.run(
-                                        ["./twitterdl.py", tweet_uri, "-ooutput/" + twit_account + "/" + status_id, "-w 500"],
-                                        capture_output=True,
-                                        timeout=300  # let's try 5 minutes
-                                    )
-                                    if dl_feedback.returncode != 0:
-                                        logging.warning('Video in tweet ' + status_id + ' from ' + twit_account + ' failed to download')
-                                        tweet_text += '\n\n[Video embedded in original tweet]'
-                                except OSError:
-                                    logging.error("Could not execute twitterdl.py (is it there? Is it set as executable?)")
-                                    sys.exit(-1)
-                                except subprocess.TimeoutExpired:
-                                    # Video download and encoding took too long
-                                    tweet_text += '\n\n[Video embedded in original tweet]'
-                            else:
-                                tweet_text += '\n\n[Video embedded in original tweet]'
-
-        # If element is hashflag (hashtag + icon), handle as simple hashtag
-        elif tag.name == 'span' and tag['class'][0] == 'twitter-hashflag-container':
-            tweet_text += tag.a.get_text()
-
-        # If tag is an image
-        elif tag.name == 'img':
-            # If it is of class 'Emoji'
-            for tc in tag['class']:
-                if tc == 'Emoji':
-                    # Get url of Emoji
-                    src = tag["src"]
-                    # Use regex to extract unicode characters from file name
-                    uni_str = re.search('/([0-9A-Fa-f\-]+?).png$', src).group(1)
-                    # build the list of hex unicode characters separated by '-' in the file name
-                    uni_list = uni_str.split('-')
-                    # Extract individual unicode chars and add them to the tweet
-                    for uni_char in uni_list:
-                        # convert string to hex value of unicode character
-                        tweet_text += chr(int(uni_char, 16))
-
-        # elif tag is a geographical point of interest
-        elif tag.name == 'span' and tag['class'][0] == 'tweet-poi-geo-text':
-            # Not sure what to do
-            pass
-
+        elif tag.name == 'a':
+            tag_text = tag.get_text()
+            if tag_text.startswith('@'):
+                # Only keep user name
+                tweet_text += tag_text
+            elif tag_text.startswith('#'):
+                # Only keep hashtag text
+                tweet_text += tag_text
+            else:
+                # This is a real link, keep url
+                tweet_text += tag.get('href')
         else:
-            print("*** WARNING: No handler for tag in twitter text: " + tag.prettify())
+            logging.warning("No handler for tag in twitter text: " + tag.prettify())
 
     return tweet_text
 
 
+def process_card(card_container):
+    """
+    Extract image from card in case mastodon does not do it
+    :param card_container: soup of 'a' tag containing card markup
+    :return: list with url of image
+    """
+    list = []
+
+    img = card_container.div.div.img
+    if img is not None:
+        image_url = 'https://nitter.net' + img.get('src')
+        list.append(image_url)
+        logging.debug('Extracted image from card')
+
+    return list
+
+
+def process_attachments(attachments_container, get_vids, twit_account, status_id, author_account):
+    """
+    Extract images or video from attachments. Videos are downloaded on the file system.
+    :param card_container: soup of 'div' tag containing attachments markup
+    :param get_vids: whether to download vids or not
+    :param twit_account: name of twitter account
+    :param status_id: id of tweet being processed
+    :param author_account: author of tweet with video attachment
+    :return: list with url of images
+    """
+    # Collect url of images
+    pics = []
+    images = attachments_container.find_all('a', class_='still-image')
+    for image in images:
+        pics.append('https://nitter.net' + image.get('href'))
+
+    logging.debug('collected ' + str(len(pics)) + ' images from attachments')
+
+    # Download nitter video (converted animated GIF)
+    gif_class = attachments_container.find('video', class_='gif')
+    if gif_class is not None:
+        gif_video_file = 'https://nitter.net' + gif_class.source.get('src')
+
+        video_path = os.path.join('output', twit_account, status_id, author_account, status_id)
+        os.makedirs(video_path, exist_ok=True)
+
+        # Open directory for writing file
+        orig_dir = os.getcwd()
+        os.chdir(video_path)
+        with requests.get(gif_video_file, stream=True) as r:
+            r.raise_for_status()
+            # Download chunks and write them to file
+            with open('gif_video.mp4', 'wb') as f:
+                for chunk in r.iter_content(chunk_size=16*1024):
+                    f.write(chunk)
+
+        logging.debug('downloaded video of GIF animation from attachments')
+
+        # Close directory
+        os.chdir(orig_dir)
+
+    # Download twitter video
+    vid_in_tweet = False
+    vid_class = attachments_container.find('div', class_='video-container')
+    if vid_class is not None:
+        video_file = os.path.join('https://twitter.com', author_account, 'status', status_id)
+        if get_vids:
+            # Download video from twitter and store in filesystem. Running as subprocess to avoid
+            # requirement to install ffmpeg and ffmpeg-python for those that do not want to post videos
+            try:
+                # Set output location to ./output/twit_account/status_id
+                dl_feedback = subprocess.run(
+                    ["./twitterdl.py", video_file, "-ooutput/" + twit_account + "/" + status_id, "-w 500"],
+                    capture_output=True,
+                )
+                if dl_feedback.returncode != 0:
+                    logging.warning('Video in tweet ' + status_id + ' from ' + twit_account + ' failed to download')
+                    vid_in_tweet = True
+                else:
+                    logging.debug('downloaded twitter video from attachments')
+
+            except OSError:
+                logging.fatal("Could not execute twitterdl.py (is it there? Is it set as executable?)")
+                sys.exit(-1)
+        else:
+            vid_in_tweet = True
+
+    return pics, vid_in_tweet
+
+
 def contains_class(body_classes, some_class):
-    '''
+    """
     :param body_classes: list of classes to search
     :param some_class: class that we are interested in
     :return: True if found, false otherwise
-    '''
+    """
     found = False
     for body_class in body_classes:
         if body_class == some_class:
@@ -195,7 +176,22 @@ def contains_class(body_classes, some_class):
 
     return found
 
+def is_time_valid(timestamp, max_age, min_delay):
+    ret = True
+    # Check that the tweet is not too young (might be deleted) or too old
+    age_in_hours = (time.time() - float(timestamp)) / 3600.0
+    min_delay_in_hours = min_delay / 60.0
+    max_age_in_hours = max_age * 24.0
+
+    if age_in_hours < min_delay_in_hours or age_in_hours > max_age_in_hours:
+        ret = False
+
+    return ret
+
+
 def main(argv):
+    # Start stopwatch
+    start_time = time.time()
 
     # Build parser for command line arguments
     parser = argparse.ArgumentParser(description='toot tweets.')
@@ -220,6 +216,23 @@ def main(argv):
     max_age = float(args['a'])
     min_delay = float(args['d'])
 
+    # Remove previous log file
+    #try:
+    #    os.remove(twit_account + '.log')
+    #except FileNotFoundError:
+    #    pass
+
+    # Setup logging to file
+    logging.basicConfig(filename=twit_account + '.log', level=logging.DEBUG)
+    logging.info('Running with the following parameters:')
+    logging.info('    -t ' + twit_account)
+    logging.info('    -i ' + mast_instance)
+    logging.info('    -m ' + mast_account)
+    logging.info('    -r ' + str(tweets_and_replies))
+    logging.info('    -v ' + str(get_vids))
+    logging.info('    -a ' + str(max_age))
+    logging.info('    -d ' + str(min_delay))
+
     # Try to open database. If it does not exist, create it
     sql = sqlite3.connect('twoot.db')
     db = sql.cursor()
@@ -243,19 +256,24 @@ def main(argv):
     headers.update(
         {
             'User-Agent': USER_AGENTS[random.randint(0, len(USER_AGENTS)-1)],
+            'Cookie': 'replaceTwitter=; replaceYouTube=; hlsPlayback=on; proxyVideos=',
         }
     )
 
-    url = 'https://mobile.twitter.com/' + twit_account
-    # Download twitter page of user. We should get a 'no javascript' landing page and some cookies
+    url = 'https://nitter.net/' + twit_account
+    # Use different page if we need to handle replies
+    if tweets_and_replies:
+        url += '/with_replies'
+
+    # Download twitter page of user.
     twit_account_page = session.get(url, headers=headers)
 
     # Verify that download worked
-    assert twit_account_page.status_code == 200,\
-        'The twitter page did not download correctly. Aborting'
+    if twit_account_page.status_code != 200:
+        logging.fatal('The Nitter page did not download correctly. Aborting')
+        exit(-1)
 
-    # If we got a No Javascript page, download the correct page
-    twit_account_page = handle_no_js(session, twit_account_page, headers)
+    logging.info('Nitter page downloaded successfully')
 
     # DEBUG: Save page to file
     #of = open(twit_account + '.html', 'w')
@@ -265,149 +283,101 @@ def main(argv):
     # Make soup
     soup = BeautifulSoup(twit_account_page.text, 'html.parser')
 
-    # Verify that we now have the correct twitter page
-    body_classes = soup.body.get_attribute_list('class')
-    assert contains_class(body_classes, 'users-show-page'), 'This is not the correct twitter page. Quitting'
-
     # Replace twit_account with version with correct capitalization
-    twit_account = soup.find('span', class_='screen-name').get_text()
+    ta = soup.find('meta', property='og:title').get('content')
+    ta_match = re.search('\(@(.+)\)', ta)
+    if ta_match is not None:
+        twit_account = ta_match.group(1)
 
     # Extract twitter timeline
-    timeline = soup.find_all('table', class_='tweet')
+    timeline = soup.find_all('div', class_='timeline-item')
 
+    logging.info('Processing ' + str(len(timeline)) + ' tweets found in timeline')
+
+    # **********************************************************
+    # Process each tweets and generate dictionary
+    # with data ready to be posted on Mastodon
+    # **********************************************************
+    out_date_cnt = 0
+    in_db_cnt = 0
     for status in timeline:
         # Extract tweet ID and status ID
-        tweet_id = str(status['href']).strip('?p=v')
+        tweet_id = status.find('a', class_='tweet-link').get('href').strip('#m')
         status_id = tweet_id.split('/')[3]
 
         logging.debug('processing tweet %s', tweet_id)
+
+        # Extract time stamp
+        time_string = status.find('span', class_='tweet-date').a.get('title')
+        timestamp = datetime.datetime.strptime(time_string, '%d/%m/%Y, %H:%M:%S').timestamp()
+
+        # Check if time is within acceptable range
+        if not is_time_valid(timestamp, max_age, min_delay):
+            out_date_cnt += 1
+            logging.debug("Tweet outside valid time range, skipping")
+            continue
 
         # Check in database if tweet has already been posted
         db.execute("SELECT * FROM toots WHERE twitter_account=? AND mastodon_instance=? AND mastodon_account=? AND tweet_id=?",
                    (twit_account, mast_instance, mast_account, tweet_id))
         tweet_in_db = db.fetchone()
 
-        logging.debug("SELECT * FROM toots WHERE twitter_account='{}' AND mastodon_instance='{}' AND mastodon_account='{}' AND tweet_id='{}'"
-                      .format(twit_account, mast_instance, mast_account, tweet_id)
-                      )
-
         if tweet_in_db is not None:
+            in_db_cnt += 1
             logging.debug("Tweet %s already in database", tweet_id)
             # Skip to next tweet
             continue
         else:
             logging.debug('Tweet %s not found in database', tweet_id)
 
-        reply_to_username = None
-        # Check if the tweet is a reply-to
-        reply_to_div = status.find('div', class_='tweet-reply-context username')
-        if reply_to_div is not None:
-            # Do we need to handle reply-to tweets?
-            if tweets_and_replies:
-                # Capture user name being replied to
-                reply_to_username = reply_to_div.a.get_text()
-            else:
-                # Skip this tweet
-                logging.debug("Tweet is a reply-to and we don't want that. Skipping.")
-                continue
-
-        # Extract url of full status page
-        full_status_url = 'https://mobile.twitter.com' + tweet_id + '?p=v'
-
-        # fetch full status page
-        full_status_page = session.get(full_status_url, headers=headers)
-
-        # Verify that download worked
-        assert full_status_page.status_code == 200, \
-            'The twitter page did not download correctly. Aborting'
-
-        # If we got a No Javascript page, download the correct page
-        full_status_page = handle_no_js(session, full_status_page, headers)
-
-        # DEBUG: Save page to file
-        #of = open('full_status_page.html', 'w')
-        #of.write(full_status_page.text)
-        #of.close()
-
-        # Make soup
-        soup = BeautifulSoup(full_status_page.text, 'html.parser')
-
-        # Verify that we now have the correct twitter page
-        body_classes = soup.body.get_attribute_list('class')
-        assert contains_class(body_classes, 'tweets-show-page'), \
-            'This is not the correct twitter page. Quitting'
-
-        # Check if tweet contains pic censored as "Sensitive material"
-        if soup.find('div', class_='accept-data') is not None:
-            # If it does, submit form to obtain uncensored tweet
-            # Submit POST form response with cookies
-            headers.update(
-                {
-                    'Origin': 'https://mobile.twitter.com',
-                    'Host': 'mobile.twitter.com',
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Referer': full_status_url,
-                }
-            )
-
-            # Data payload for POST request
-            authenticity_token = soup.find('input', {'name': 'authenticity_token'}).get('value')
-            form_input = {'show_media': 1, 'authenticity_token': authenticity_token, 'commit': 'Display media'}
-
-            full_status_page = session.post(full_status_url, data=form_input, headers=headers)
-
-            # Verify that download worked
-            assert full_status_page.status_code == 200, \
-                'The twitter page did not download correctly. Aborting'
-
-            # DEBUG: Save page to file
-            #of = open('full_status_page_uncensored.html', 'w')
-            #of.write(full_status_page.text)
-            #of.close()
-
-            # Remake soup
-            soup = BeautifulSoup(full_status_page.text, 'html.parser')
-
-        # Isolate table main-tweet
-        tmt = soup.find('table', class_='main-tweet')
-
-        # Extract avatar
-        author_logo_url = tmt.find('td', class_='avatar').a.img['src']
-
         # extract author
-        author = tmt.find('div', class_='fullname').a.strong.get_text()
+        author = status.find('a', class_='fullname').get('title')
 
         # Extract user name
-        author_account = str(tmt.find('span', class_='username').span.next_sibling).strip('\n ')
+        author_account = status.find('a', class_='username').get('title').lstrip('@')
 
-        # Extract time stamp
-        time_string = tmt.find('div', class_='metadata').a.get_text()
-        timestamp = datetime.datetime.strptime(time_string, '%I:%M %p - %d %b %Y').timestamp()
+        # Extract URL of full status page (for video download)
+        full_status_url = 'https://twitter.com' + tweet_id
 
-        # extract iterator over tweet text contents
-        tt_iter = tmt.find('div', class_='tweet-text').div.children
+        # Initialize containers
+        tweet_text = ''
+        photos = []
 
-        tweet_text = cleanup_tweet_text(tt_iter, twit_account, status_id, full_status_url, get_vids)
-
-        # Mention if the tweet is a reply-to
-        if reply_to_username is not None:
-            tweet_text = 'In reply to ' + reply_to_username + '\n\n' + tweet_text
+        # Add prefix if the tweet is a reply-to
+        replying_to_class = status.find('div', class_='replying-to')
+        if replying_to_class is not None:
+            tweet_text += 'Replying to ' + replying_to_class.a.get_text() + '\n\n'
 
         # Check it the tweet is a retweet from somebody else
         if author_account.lower() != twit_account.lower():
-            tweet_text = 'RT from ' + author + ' (@' + author_account + ')\n\n' + tweet_text
+            tweet_text = 'RT from ' + author + ' (@' + author_account + ')\n\n'
+
+        # extract iterator over tweet text contents
+        tt_iter = status.find('div', class_='tweet-content media-body').children
+
+        # Process text of tweet
+        tweet_text += process_media_body(tt_iter)
+
+        # Process quote: append link to tweet_text
+        quote_div = status.find('a', class_='quote-link')
+        if quote_div is not None:
+            tweet_text += '\n\nhttps://twitter.com' + quote_div.get('href').strip('#m')
+
+        # Process card : extract image if necessary
+        card_class = status.find('a', class_='card-container')
+        if card_class is not None:
+            photos.extend(process_card(card_class))
+
+        # Process attachment: capture image or .mp4 url or download twitter video
+        attachments_class = status.find('div', class_='attachments')
+        if attachments_class is not None:
+            pics, vid_in_tweet = process_attachments(attachments_class, get_vids, twit_account, status_id, author_account)
+            photos.extend(pics)
+            if vid_in_tweet:
+                tweet_text += '\n\n[Video embedded in original tweet]'
 
         # Add footer with link to original tweet
-        tweet_text += '\n\nOriginal tweet : https://twitter.com' + tweet_id
-
-        photos = []  # The no_js version of twitter only shows one photo
-
-        # Check if there are photos attached
-        media = tmt.find('div', class_='media')
-        if media:
-            # Extract photo url and add it to list
-            pic = str(media.img['src']).strip(':small')
-            photos.append(pic)
+        tweet_text += '\n\nOriginal tweet : ' + full_status_url
 
         # If no media was specifically added in the tweet, try to get the first picture
         # with "twitter:image" meta tag in first linked page in tweet text
@@ -431,6 +401,8 @@ def main(argv):
                             requests.exceptions.TooManyRedirects,
                             requests.exceptions.MissingSchema):
                         pass
+                    else:
+                        logging.debug("downloaded twitter:image from linked page")
 
         # Check if video was downloaded
         video_file = None
@@ -451,7 +423,6 @@ def main(argv):
         tweet = {
             "author": author,
             "author_account": author_account,
-            "author_logo_url": author_logo_url,
             "timestamp": timestamp,
             "tweet_id": tweet_id,
             "tweet_text": tweet_text,
@@ -460,15 +431,19 @@ def main(argv):
         }
         tweets.append(tweet)
 
-        logging.debug('Tweet %s added to list to upload', tweet_id)
+        logging.debug('Tweet %s added to list of toots to upload', tweet_id)
+
+    # TODO  Log summary stats: how many not in db, how many in valid timeframe
+    logging.info(str(out_date_cnt) + ' tweets outside of valid time range')
+    logging.info(str(in_db_cnt) + ' tweets already in database')
 
     # DEBUG: Print extracted tweets
-#    for t in tweets:
-#         print(t)
+    #for t in tweets:
+    #print(t)
 
     # **********************************************************
     # Iterate tweets in list.
-    # post each on Mastodon and reference to it in database
+    # post each on Mastodon and record it in database
     # **********************************************************
 
     # Create Mastodon application if it does not exist yet
@@ -481,7 +456,8 @@ def main(argv):
             )
 
         except MastodonError as me:
-            print('failed to create app on ' + mast_instance)
+            logging.fatal('failed to create app on ' + mast_instance)
+            logging.fatal(me)
             sys.exit(1)
 
     # Log in to Mastodon instance
@@ -496,31 +472,24 @@ def main(argv):
             password=mast_password,
             to_file=mast_account + ".secret"
         )
+        logging.info('Logging in to ' + mast_instance)
 
     except MastodonError as me:
-        print('ERROR: Login to ' + mast_instance + ' Failed')
-        print(me)
+        logging.fatal('ERROR: Login to ' + mast_instance + ' Failed\n')
+        logging.fatal(me)
         sys.exit(1)
 
     # Upload tweets
+    posted_cnt = 0
     for tweet in reversed(tweets):
         logging.debug('Uploading Tweet %s', tweet["tweet_id"])
-        # Check that the tweet is not too young (might be deleted) or too old
-        age_in_hours = (time.time() - float(tweet['timestamp'])) / 3600.0
-        min_delay_in_hours = min_delay / 60.0
-        max_age_in_hours = max_age * 24.0
-
-        if age_in_hours < min_delay_in_hours or age_in_hours > max_age_in_hours:
-            # Skip to next tweet
-            logging.debug("Tweet too young or too old, skipping")
-            continue
 
         media_ids = []
 
         # Upload video if there is one
         if tweet['video'] is not None:
             try:
-                logging.debug("Uploading video")
+                logging.debug("Uploading video to Mastodon")
                 media_posted = mastodon.media_post(tweet['video'])
                 media_ids.append(media_posted['id'])
             except (MastodonAPIError, MastodonIllegalArgumentError, TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
@@ -533,6 +502,7 @@ def main(argv):
                 media = False
                 # Download picture
                 try:
+                    logging.debug('downloading picture')
                     media = requests.get(photo)
                 except:  # Picture cannot be downloaded for any reason
                     pass
@@ -540,13 +510,13 @@ def main(argv):
                 # Upload picture to Mastodon instance
                 if media:
                     try:
+                        logging.debug('uploading picture to Mastodon')
                         media_posted = mastodon.media_post(media.content, mime_type=media.headers['content-type'])
                         media_ids.append(media_posted['id'])
                     except (MastodonAPIError, MastodonIllegalArgumentError, TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
                         pass
 
         # Post toot
-        logging.debug('Doing it now')
         try:
             mastodon = Mastodon(
                 access_token=mast_account + '.secret',
@@ -561,9 +531,10 @@ def main(argv):
         except MastodonError as me:
             logging.error('posting ' + tweet['tweet_text'] + ' to ' + mast_instance + ' Failed')
             logging.error(me)
-            sys.exit(1)
 
-        logging.debug('Tweet %s posted on %s', tweet_id, mast_account)
+        else:
+            posted_cnt += 1
+            logging.debug('Tweet %s posted on %s', tweet['tweet_id'], mast_account)
 
         # Insert toot id into database
         if 'id' in toot:
@@ -571,11 +542,16 @@ def main(argv):
                        (twit_account, mast_instance, mast_account, tweet['tweet_id'], toot['id']))
             sql.commit()
 
+    logging.info(str(posted_cnt) + ' Tweets posted to Mastodon')
+
     # Cleanup downloaded video files
     try:
         shutil.rmtree('./output/' + twit_account)
     except FileNotFoundError:  # The directory does not exist
         pass
+
+    logging.info('Run time : %2.1f seconds' % (time.time() - start_time))
+    logging.info('_____________________________________________________________________________________')
 
 
 if __name__ == "__main__":

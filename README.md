@@ -12,11 +12,10 @@
 Twoot is a python script that extracts tweets from a twitter feed and
 reposts them as toots on a Mastodon account.
 
-I started twoot when [tootbot](https://github.com/cquest/tootbot)
-stopped working. Tootbot relies on rss feeds from https://twitrss.me
-that broke when Twitter refreshed their web UI in July 2019.
-
-Instead twoot is self contained and handles all the processing.  
+**UPDATE 19 DEC 2020** VERSION 2.0 Twitter's *no-javascript* version
+has been retired. Twoot has been rewritten to get content from
+[nitter.net](https://nitter.net) which is a javascript-free mirror of
+twitter. As a bonus (or a curse?) twoot now also supports animated GIFs.
 
 **UPDATE 05 APR 2020** VERSION 1.0. Twoot can now optionally download
 videos from Twitter and upload them on Mastodon.
@@ -100,3 +99,8 @@ ago:
 ```
 1-59/15 * * * * /path/to/twoot.py -t SuperDuperBot -i botsin.space -m superduperbot -p my_Sup3r-S4f3*pw -a 5 -d 15
 ```
+
+# Background
+I started twoot when [tootbot](https://github.com/cquest/tootbot)
+stopped working. Tootbot relies on rss feeds from https://twitrss.me
+that broke when Twitter refreshed their web UI in July 2019.
