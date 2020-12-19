@@ -26,7 +26,8 @@ import random
 import requests
 from bs4 import BeautifulSoup, element
 import sqlite3
-import datetime, time
+import datetime
+import time
 import re
 from pathlib import Path
 from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalArgumentError
@@ -189,6 +190,8 @@ def is_time_valid(timestamp, max_age, min_delay):
 
 
 def main(argv):
+    # Start stopwatch
+    start_time = time.time()
 
     # Build parser for command line arguments
     parser = argparse.ArgumentParser(description='toot tweets.')
@@ -536,6 +539,7 @@ def main(argv):
             sql.commit()
 
     logging.info(str(posted_cnt) + ' Tweets posted to Mastodon')
+    logging.info('Run time : ' + str(time.time() - start_time) + ' seconds')
 
     # Cleanup downloaded video files
     try:
