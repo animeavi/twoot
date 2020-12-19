@@ -546,7 +546,7 @@ def main(argv):
     except FileNotFoundError:  # The directory does not exist
         pass
 
-    logging.info('Run time : %2.1f seconds', str(time.time() - start_time))
+    logging.info('Run time : %2.1f seconds' % (time.time() - start_time))
     logging.info('_____________________________________________________________')
 
 
