@@ -217,10 +217,10 @@ def main(argv):
     min_delay = float(args['d'])
 
     # Remove previous log file
-    try:
-        os.remove(twit_account + '.log')
-    except FileNotFoundError:
-        pass
+    #try:
+    #    os.remove(twit_account + '.log')
+    #except FileNotFoundError:
+    #    pass
 
     # Setup logging to file
     logging.basicConfig(filename=twit_account + '.log', level=logging.DEBUG)
@@ -539,7 +539,6 @@ def main(argv):
             sql.commit()
 
     logging.info(str(posted_cnt) + ' Tweets posted to Mastodon')
-    logging.info('Run time : ' + str(time.time() - start_time) + ' seconds')
 
     # Cleanup downloaded video files
     try:
@@ -547,6 +546,8 @@ def main(argv):
     except FileNotFoundError:  # The directory does not exist
         pass
 
+    logging.info('Run time : ' + str(time.time() - start_time) + ' seconds')
+    logging.info('_____________________________________________________________')
 
 if __name__ == "__main__":
     main(sys.argv)
