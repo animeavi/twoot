@@ -401,6 +401,8 @@ def main(argv):
                             requests.exceptions.TooManyRedirects,
                             requests.exceptions.MissingSchema):
                         pass
+                    else:
+                        logging.debug("downloaded twitter:image from linked page")
 
         # Check if video was downloaded
         video_file = None
