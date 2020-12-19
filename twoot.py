@@ -489,7 +489,7 @@ def main(argv):
         # Upload video if there is one
         if tweet['video'] is not None:
             try:
-                logging.debug("Uploading video")
+                logging.debug("Uploading video to Mastodon")
                 media_posted = mastodon.media_post(tweet['video'])
                 media_ids.append(media_posted['id'])
             except (MastodonAPIError, MastodonIllegalArgumentError, TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
@@ -502,6 +502,7 @@ def main(argv):
                 media = False
                 # Download picture
                 try:
+                    logging.debug('downloading picture')
                     media = requests.get(photo)
                 except:  # Picture cannot be downloaded for any reason
                     pass
@@ -509,6 +510,7 @@ def main(argv):
                 # Upload picture to Mastodon instance
                 if media:
                     try:
+                        logging.debug('uploading picture to Mastodon')
                         media_posted = mastodon.media_post(media.content, mime_type=media.headers['content-type'])
                         media_ids.append(media_posted['id'])
                     except (MastodonAPIError, MastodonIllegalArgumentError, TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
