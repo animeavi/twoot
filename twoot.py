@@ -34,6 +34,7 @@ from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalA
 import subprocess
 import shutil
 
+NITTER_URL = 'https://nitter.42l.fr'
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
 USER_AGENTS = [
@@ -86,7 +87,7 @@ def process_card(card_container):
 
     img = card_container.div.div.img
     if img is not None:
-        image_url = 'https://nitter.net' + img.get('src')
+        image_url = NITTER_URL + img.get('src')
         list.append(image_url)
         logging.debug('Extracted image from card')
 
@@ -107,14 +108,14 @@ def process_attachments(attachments_container, get_vids, twit_account, status_id
     pics = []
     images = attachments_container.find_all('a', class_='still-image')
     for image in images:
-        pics.append('https://nitter.net' + image.get('href'))
+        pics.append(NITTER_URL + image.get('href'))
 
     logging.debug('collected ' + str(len(pics)) + ' images from attachments')
 
     # Download nitter video (converted animated GIF)
     gif_class = attachments_container.find('video', class_='gif')
     if gif_class is not None:
-        gif_video_file = 'https://nitter.net' + gif_class.source.get('src')
+        gif_video_file = NITTER_URL + gif_class.source.get('src')
 
         video_path = os.path.join('output', twit_account, status_id, author_account, status_id)
         os.makedirs(video_path, exist_ok=True)
@@ -260,7 +261,7 @@ def main(argv):
         }
     )
 
-    url = 'https://nitter.net/' + twit_account
+    url = NITTER_URL + '/' + twit_account
     # Use different page if we need to handle replies
     if tweets_and_replies:
         url += '/with_replies'
