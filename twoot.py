@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-    Copyright (C) 2020  Jean-Christophe Francois
+    Copyright (C) 2020-2021  Jean-Christophe Francois
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,14 +34,25 @@ from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalA
 import subprocess
 import shutil
 
-NITTER_URL = 'https://nitter.42l.fr'
+NITTER_URLS = [
+    'https://nitter.42l.fr',
+    'https://nitter.pussthecat.org/',
+    'https://nitter.mastodont.cat',
+    'https://nitter.tedomum.net',
+    'https://nitter.fdn.fr/',
+    'https://nitter.unixfox.eu',
+    'https://nitter.eu',
+    'https://nitter.namazso.eu',
+    'https://nitter.mailstation.de',
+    'https://nitter.cattube.org'
+    ]
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
 USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.1 Safari/605.1.15',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36 Edg/87.0.664.60',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.190 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.190 Safari/537.36 Edg/88.0.705.81',
+    'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.190 Safari/537.36 Vivaldi/3.6',
     ]
 
 
@@ -77,7 +88,7 @@ def process_media_body(tt_iter):
     return tweet_text
 
 
-def process_card(card_container):
+def process_card(nitter_url, card_container):
     """
     Extract image from card in case mastodon does not do it
     :param card_container: soup of 'a' tag containing card markup
@@ -87,18 +98,19 @@ def process_card(card_container):
 
     img = card_container.div.div.img
     if img is not None:
-        image_url = NITTER_URL + img.get('src')
+        image_url = nitter_url + img.get('src')
         list.append(image_url)
         logging.debug('Extracted image from card')
 
     return list
 
 
-def process_attachments(attachments_container, get_vids, twit_account, status_id, author_account):
+def process_attachments(nitter_url, attachments_container, get_vids, twit_account, status_id, author_account):
     """
     Extract images or video from attachments. Videos are downloaded on the file system.
-    :param card_container: soup of 'div' tag containing attachments markup
-    :param get_vids: whether to download vids or not
+    :param nitter_url: url of nitter mirror
+    :param attachments_container: soup of 'div' tag containing attachments markup
+    :param get_vids: whether to download videos or not
     :param twit_account: name of twitter account
     :param status_id: id of tweet being processed
     :param author_account: author of tweet with video attachment
@@ -108,14 +120,14 @@ def process_attachments(attachments_container, get_vids, twit_account, status_id
     pics = []
     images = attachments_container.find_all('a', class_='still-image')
     for image in images:
-        pics.append(NITTER_URL + image.get('href'))
+        pics.append(nitter_url + image.get('href'))
 
     logging.debug('collected ' + str(len(pics)) + ' images from attachments')
 
     # Download nitter video (converted animated GIF)
     gif_class = attachments_container.find('video', class_='gif')
     if gif_class is not None:
-        gif_video_file = NITTER_URL + gif_class.source.get('src')
+        gif_video_file = nitter_url + gif_class.source.get('src')
 
         video_path = os.path.join('output', twit_account, status_id, author_account, status_id)
         os.makedirs(video_path, exist_ok=True)
@@ -224,7 +236,7 @@ def main(argv):
     #    pass
 
     # Setup logging to file
-    logging.basicConfig(filename=twit_account + '.log', level=logging.DEBUG)
+    logging.basicConfig(filename=twit_account + '.log', level=logging.WARNING)
     logging.info('Running with the following parameters:')
     logging.info('    -t ' + twit_account)
     logging.info('    -i ' + mast_instance)
@@ -239,6 +251,9 @@ def main(argv):
     db = sql.cursor()
     db.execute('''CREATE TABLE IF NOT EXISTS toots (twitter_account TEXT, mastodon_instance TEXT,
                mastodon_account TEXT, tweet_id TEXT, toot_id TEXT)''')
+
+    # Select random nitter instance to fetch updates from
+    nitter_url = NITTER_URLS[random.randint(0, len(NITTER_URLS)-1)]
 
     # **********************************************************
     # Load twitter page of user. Process all tweets and generate
@@ -261,7 +276,7 @@ def main(argv):
         }
     )
 
-    url = NITTER_URL + '/' + twit_account
+    url = nitter_url + '/' + twit_account
     # Use different page if we need to handle replies
     if tweets_and_replies:
         url += '/with_replies'
@@ -286,7 +301,7 @@ def main(argv):
 
     # Replace twit_account with version with correct capitalization
     ta = soup.find('meta', property='og:title').get('content')
-    ta_match = re.search('\(@(.+)\)', ta)
+    ta_match = re.search(r'\(@(.+)\)', ta)
     if ta_match is not None:
         twit_account = ta_match.group(1)
 
@@ -367,12 +382,12 @@ def main(argv):
         # Process card : extract image if necessary
         card_class = status.find('a', class_='card-container')
         if card_class is not None:
-            photos.extend(process_card(card_class))
+            photos.extend(process_card(nitter_url, card_class))
 
         # Process attachment: capture image or .mp4 url or download twitter video
         attachments_class = status.find('div', class_='attachments')
         if attachments_class is not None:
-            pics, vid_in_tweet = process_attachments(attachments_class, get_vids, twit_account, status_id, author_account)
+            pics, vid_in_tweet = process_attachments(nitter_url, attachments_class, get_vids, twit_account, status_id, author_account)
             photos.extend(pics)
             if vid_in_tweet:
                 tweet_text += '\n\n[Video embedded in original tweet]'
@@ -412,7 +427,7 @@ def main(argv):
         if video_path.exists():
             # Take the first subdirectory of video path (named after original poster of video)
             video_path = [p for p in video_path.iterdir() if p.is_dir()][0]
-            # Take again the first subdirectory of video path (named after status id of original post where vidoe is attached)
+            # Take again the first subdirectory of video path (named after status id of original post where video is attached)
             video_path = [p for p in video_path.iterdir() if p.is_dir()][0]
             # list video files
             video_file_list = list(video_path.glob('*.mp4'))
@@ -434,7 +449,7 @@ def main(argv):
 
         logging.debug('Tweet %s added to list of toots to upload', tweet_id)
 
-    # TODO  Log summary stats: how many not in db, how many in valid timeframe
+    # Log summary stats
     logging.info(str(out_date_cnt) + ' tweets outside of valid time range')
     logging.info(str(in_db_cnt) + ' tweets already in database')
 
