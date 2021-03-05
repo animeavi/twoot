@@ -160,6 +160,7 @@ def process_attachments(nitter_url, attachments_container, get_vids, twit_accoun
                 dl_feedback = subprocess.run(
                     ["./twitterdl.py", video_file, "-ooutput/" + twit_account + "/" + status_id, "-w 500"],
                     capture_output=True,
+                    timeout=300
                 )
                 if dl_feedback.returncode != 0:
                     logging.warning('Video in tweet ' + status_id + ' from ' + twit_account + ' failed to download')
@@ -236,7 +237,7 @@ def main(argv):
     #    pass
 
     # Setup logging to file
-    logging.basicConfig(filename=twit_account + '.log', level=logging.WARNING)
+    logging.basicConfig(filename=twit_account + '.log', level=logging.INFO)
     logging.info('Running with the following parameters:')
     logging.info('    -t ' + twit_account)
     logging.info('    -i ' + mast_instance)
@@ -286,7 +287,7 @@ def main(argv):
 
     # Verify that download worked
     if twit_account_page.status_code != 200:
-        logging.fatal('The Nitter page did not download correctly. Aborting')
+        logging.fatal('The Nitter page did not download correctly from' + url + '. Aborting')
         exit(-1)
 
     logging.info('Nitter page downloaded successfully')
