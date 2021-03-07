@@ -201,6 +201,42 @@ def is_time_valid(timestamp, max_age, min_delay):
 
     return ret
 
+def login(instance, account, password):
+    # Create Mastodon application if it does not exist yet
+    if not os.path.isfile(instance + '.secret'):
+        try:
+            Mastodon.create_app(
+                'twoot',
+                api_base_url='https://' + instance,
+                to_file=instance + '.secret'
+            )
+
+        except MastodonError as me:
+            logging.fatal('failed to create app on ' + instance)
+            logging.fatal(me)
+            sys.exit(-1)
+
+    # Log in to Mastodon instance
+    try:
+        mastodon = Mastodon(
+            client_id=instance + '.secret',
+            api_base_url='https://' + instance
+        )
+
+        mastodon.log_in(
+            username=account,
+            password=password,
+            to_file=account + ".secret"
+        )
+        logging.info('Logging in to ' + instance)
+
+    except MastodonError as me:
+        logging.fatal('ERROR: Login to ' + instance + ' Failed\n')
+        logging.fatal(me)
+        sys.exit(-1)
+    
+    return mastodon
+
 
 def main(argv):
     # Start stopwatch
@@ -457,45 +493,16 @@ def main(argv):
     #for t in tweets:
     #print(t)
 
+    # Login to account on maston instance 
+    mastodon = None
+    if len(tweets) != 0:
+        mastodon = login(mast_instance, mast_account, mast_password)
+
     # **********************************************************
     # Iterate tweets in list.
     # post each on Mastodon and record it in database
     # **********************************************************
 
-    # Create Mastodon application if it does not exist yet
-    if not os.path.isfile(mast_instance + '.secret'):
-        try:
-            Mastodon.create_app(
-                'twoot',
-                api_base_url='https://' + mast_instance,
-                to_file=mast_instance + '.secret'
-            )
-
-        except MastodonError as me:
-            logging.fatal('failed to create app on ' + mast_instance)
-            logging.fatal(me)
-            sys.exit(1)
-
-    # Log in to Mastodon instance
-    try:
-        mastodon = Mastodon(
-            client_id=mast_instance + '.secret',
-            api_base_url='https://' + mast_instance
-        )
-
-        mastodon.log_in(
-            username=mast_account,
-            password=mast_password,
-            to_file=mast_account + ".secret"
-        )
-        logging.info('Logging in to ' + mast_instance)
-
-    except MastodonError as me:
-        logging.fatal('ERROR: Login to ' + mast_instance + ' Failed\n')
-        logging.fatal(me)
-        sys.exit(1)
-
-    # Upload tweets
     posted_cnt = 0
     for tweet in reversed(tweets):
         logging.debug('Uploading Tweet %s', tweet["tweet_id"])
