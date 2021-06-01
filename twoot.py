@@ -235,7 +235,7 @@ def login(instance, account, password):
         logging.fatal('ERROR: Login to ' + instance + ' Failed\n')
         logging.fatal(me)
         sys.exit(-1)
-    
+
     return mastodon
 
 
@@ -276,7 +276,7 @@ def main(argv):
 
     # Setup logging to file
     # TODO  Add timestamps
-    logging.basicConfig(filename=twit_account + '.log', level=logging.WARNING)
+    logging.basicConfig(filename=twit_account + '.log', level=logging.INFO)
     logging.info('Running with the following parameters:')
     logging.info('    -t ' + twit_account)
     logging.info('    -i ' + mast_instance)
@@ -285,6 +285,7 @@ def main(argv):
     logging.info('    -v ' + str(get_vids))
     logging.info('    -a ' + str(max_age))
     logging.info('    -d ' + str(min_delay))
+    logging.info('    -c ' + str(cap))
 
     # Try to open database. If it does not exist, create it
     sql = sqlite3.connect('twoot.db')
@@ -326,7 +327,7 @@ def main(argv):
 
     # Verify that download worked
     if twit_account_page.status_code != 200:
-        logging.fatal('The Nitter page did not download correctly from' + url + '. Aborting')
+        logging.fatal('The Nitter page did not download correctly from ' + url + '. Aborting')
         exit(-1)
 
     logging.info('Nitter page downloaded successfully')
