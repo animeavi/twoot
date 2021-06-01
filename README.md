@@ -3,6 +3,9 @@
 Twoot is a python script that extracts tweets from a twitter feed and
 reposts them as toots on a Mastodon account.
 
+**UPDATE 01 JUN 2021** Added command line argument (`-c`) to limit the
+number of toots posted on the mastodon account.
+
 **UPDATE 19 DEC 2020** VERSION 2.0 Twitter's *no-javascript* version
 has been retired. Twoot has been rewritten to get content from
 [nitter.net](https://nitter.net) which is a javascript-free mirror of
