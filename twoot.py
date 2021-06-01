@@ -275,8 +275,13 @@ def main(argv):
     #    pass
 
     # Setup logging to file
-    # TODO  Add timestamps
-    logging.basicConfig(filename=twit_account + '.log', level=logging.INFO)
+    logging.basicConfig(
+        filename=twit_account + '.log',
+        level=logging.INFO,
+        fmt='%(asctime)s %(levelname)-8s %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+    )
+
     logging.info('Running with the following parameters:')
     logging.info('    -t ' + twit_account)
     logging.info('    -i ' + mast_instance)
