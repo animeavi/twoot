@@ -253,6 +253,7 @@ def main(argv):
     parser.add_argument('-v', action='store_true', help='Ingest twitter videos and upload to Mastodon instance')
     parser.add_argument('-a', metavar='<max age (in days)>', action='store', type=float, default=1)
     parser.add_argument('-d', metavar='<min delay (in mins)>', action='store', type=float, default=0)
+    parser.add_argument('-c', metavar='<max # of toots to post>', action='store', type=int, default=0)
 
     # Parse command line
     args = vars(parser.parse_args())
@@ -265,6 +266,7 @@ def main(argv):
     get_vids = args['v']
     max_age = float(args['a'])
     min_delay = float(args['d'])
+    cap = int(args['c'])
 
     # Remove previous log file
     #try:
@@ -505,8 +507,15 @@ def main(argv):
     # post each on Mastodon and record it in database
     # **********************************************************
 
+    if cap != 0:
+        logging.info('# of toots to post capped to %d', cap)
+
     posted_cnt = 0
     for tweet in reversed(tweets):
+        # Check if we have reached the cap on the number of toots to post
+        if cap != 0 and posted_cnt >= cap:
+            break
+
         logging.debug('Uploading Tweet %s', tweet["tweet_id"])
 
         media_ids = []
