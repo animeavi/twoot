@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-    Copyright (C) 2020-2021  Jean-Christophe Francois
+    Copyright (C) 2019-2021  Jean-Christophe Francois
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -273,6 +273,7 @@ def main(argv):
     #    pass
 
     # Setup logging to file
+    # TODO  Add timestamps
     logging.basicConfig(filename=twit_account + '.log', level=logging.WARNING)
     logging.info('Running with the following parameters:')
     logging.info('    -t ' + twit_account)
