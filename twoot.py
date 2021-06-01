@@ -36,15 +36,15 @@ import shutil
 
 NITTER_URLS = [
     'https://nitter.42l.fr',
-    'https://nitter.pussthecat.org/',
-    'https://nitter.mastodont.cat',
+    'https://nitter.pussthecat.org',
     'https://nitter.tedomum.net',
-    'https://nitter.fdn.fr/',
-    'https://nitter.unixfox.eu',
+    'https://nitter.fdn.fr',
     'https://nitter.eu',
     'https://nitter.namazso.eu',
+    'https://nitter.cattube.org',
     'https://nitter.mailstation.de',
-    'https://nitter.cattube.org'
+#    'https://nitter.mastodont.cat',    # Unresponsive 11/04/2021
+#    'https://nitter.unixfox.eu',       # Unreliable
     ]
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
