@@ -37,9 +37,9 @@ of last week.
 # usage
 
 ```
-twoot.py [-h] -t <twitter account> -i <mastodon instance> -m <mastodon
-                account> -p <mastodon password> [-r] [-v]
-                [-a <max age in days>] [-d <min delay in mins>]
+twoot.py [-h] -t <twitter account> -i <mastodon instance> -m <mastodon account>
+                -p <mastodon password> [-r] [-v] [-a <max age in days)>]
+                [-d <min delay (in mins>] [-c <max # of toots to post>]
 ```
 
 # arguments
@@ -57,6 +57,7 @@ is @superduperbot@botsin.space
 | -r    | Post reply-to tweets (ignored by default)        | *N/A*              | No  |
 | -a    | Max. age of tweet to post (in days)              | `5`                | No  |
 | -d    | Min. delay before posting new tweet (in minutes) | `15`               | No  |
+| -c    | Max number of toots allowed to post (cap)        | `1`                | No  |
 
 When using the `-v` switch consider:
 * whether the copyright of the content that you want to cross-post allows it
