@@ -513,13 +513,11 @@ def main(argv):
     # post each on Mastodon and record it in database
     # **********************************************************
 
-    if cap != 0:
-        logging.info('# of toots to post capped to %d', cap)
-
     posted_cnt = 0
     for tweet in reversed(tweets):
         # Check if we have reached the cap on the number of toots to post
         if cap != 0 and posted_cnt >= cap:
+            logging.info('%d toots not posted due to configured cap', len(tweets) - cap)
             break
 
         logging.debug('Uploading Tweet %s', tweet["tweet_id"])
