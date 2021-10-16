@@ -328,7 +328,11 @@ def main(argv):
         url += '/with_replies'
 
     # Download twitter page of user.
-    twit_account_page = session.get(url, headers=headers)
+    try:
+        twit_account_page = session.get(url, headers=headers)
+    except requests.exceptions.ConnectionError:
+        logging.fatal('Host did not respond when trying to download ' + url)
+        exit(-1)
 
     # Verify that download worked
     if twit_account_page.status_code != 200:
