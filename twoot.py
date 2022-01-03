@@ -37,14 +37,12 @@ import shutil
 NITTER_URLS = [
     'https://nitter.42l.fr',
     'https://nitter.pussthecat.org',
-#    'https://nitter.nixnet.services',  # Requires login 31/12/2021
     'https://nitter.fdn.fr',
     'https://nitter.eu',
-#    'https://nitter.namazso.eu',		# Stopped responding 07/10/2021
-#    'https://nitter.cattube.org',		# Certificate expired 06/10/2021
-#    'https://nitter.mailstation.de',   # Unreliable
+    'https://nitter.namazso.eu',
+    'https://nitter.actionsack.com',
+    'https://nittereu.moomoo.me',
     'https://nitter.eu',
-#    'https://nitter.unixfox.eu',       # Unreliable
     ]
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
@@ -339,7 +337,7 @@ def main(argv):
         logging.fatal('The Nitter page did not download correctly from ' + url + '. Aborting')
         exit(-1)
 
-    logging.info('Nitter page downloaded successfully')
+    logging.info('Nitter page downloaded successfully from ' + url)
 
     # DEBUG: Save page to file
     #of = open(twit_account + '.html', 'w')
