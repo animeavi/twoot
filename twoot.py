@@ -373,7 +373,11 @@ def main(argv):
 
         # Extract time stamp
         time_string = status.find('span', class_='tweet-date').a.get('title')
-        timestamp = datetime.datetime.strptime(time_string, '%d/%m/%Y, %H:%M:%S').timestamp()
+        try:
+            timestamp = datetime.datetime.strptime(time_string, '%d/%m/%Y, %H:%M:%S').timestamp()
+        except:
+            # Dec 21, 2021 · 12:00 PM UTC
+            timestamp = datetime.datetime.strptime(time_string, '%b %d, %Y · %I:%M %p %Z').timestamp()
 
         # Check if time is within acceptable range
         if not is_time_valid(timestamp, max_age, min_delay):
