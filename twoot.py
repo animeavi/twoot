@@ -37,14 +37,14 @@ import shutil
 NITTER_URLS = [
     'https://nitter.42l.fr',
     'https://nitter.pussthecat.org',
-    'https://nitter.nixnet.services',
+#    'https://nitter.nixnet.services',  # Requires login 31/12/2021
     'https://nitter.fdn.fr',
     'https://nitter.eu',
 #    'https://nitter.namazso.eu',		# Stopped responding 07/10/2021
 #    'https://nitter.cattube.org',		# Certificate expired 06/10/2021
-    'https://nitter.mailstation.de',
+#    'https://nitter.mailstation.de',   # Unreliable
     'https://nitter.eu',
-    'https://nitter.unixfox.eu',       # Unreliable
+#    'https://nitter.unixfox.eu',       # Unreliable
     ]
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
@@ -277,7 +277,7 @@ def main(argv):
     # Setup logging to file
     logging.basicConfig(
         filename=twit_account + '.log',
-        level=logging.INFO,
+        level=logging.WARN,
         format='%(asctime)s %(levelname)-8s %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
     )
