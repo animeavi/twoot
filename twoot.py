@@ -37,12 +37,14 @@ import shutil
 NITTER_URLS = [
     'https://nitter.42l.fr',
     'https://nitter.pussthecat.org',
+    'https://nitter.nixnet.services',
     'https://nitter.fdn.fr',
+    'https://nitter.unixfox.eu',
     'https://nitter.eu',
     'https://nitter.namazso.eu',
     'https://n.actionsack.com',
     'https://nittereu.moomoo.me',
-    'https://nitter.eu',
+    'https://nitter.ramle.be',
     ]
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
