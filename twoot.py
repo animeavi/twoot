@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-    Copyright (C) 2019-2021  Jean-Christophe Francois
+    Copyright (C) 2019-2022  Jean-Christophe Francois
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,7 +38,6 @@ NITTER_URLS = [
     'https://nitter.42l.fr',
     'https://nitter.pussthecat.org',
     'https://nitter.fdn.fr',
-    'https://nitter.unixfox.eu',
     'https://nitter.eu',
     'https://nitter.namazso.eu',
     'https://n.actionsack.com',
@@ -296,8 +295,8 @@ def main(argv):
     db = sql.cursor()
     db.execute('''CREATE TABLE IF NOT EXISTS toots (twitter_account TEXT, mastodon_instance TEXT,
                mastodon_account TEXT, tweet_id TEXT, toot_id TEXT)''')
-    db.execute('''CREATE UNIQUE INDEX IF NOT EXITS master ON toots (twitter_account,
-               mastodon_instance, mastodon_account, tweet_id)''')
+    #db.execute('''CREATE UNIQUE INDEX IF NOT EXITS master ON toots (twitter_account,
+    #           mastodon_instance, mastodon_account, tweet_id)''')
 
     # Select random nitter instance to fetch updates from
     nitter_url = NITTER_URLS[random.randint(0, len(NITTER_URLS)-1)]
@@ -337,7 +336,7 @@ def main(argv):
 
     # Verify that download worked
     if twit_account_page.status_code != 200:
-        logging.fatal('The Nitter page did not download correctly from ' + url + ' (' + twit_account_page.status_code + '). Aborting')
+        logging.fatal('The Nitter page did not download correctly from ' + url + ' (' + str(twit_account_page.status_code) + '). Aborting')
         exit(-1)
 
     logging.info('Nitter page downloaded successfully from ' + url)
