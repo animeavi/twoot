@@ -44,7 +44,7 @@ NITTER_URLS = [
     'https://nitter.namazso.eu',
     'https://n.actionsack.com',
     'https://nittereu.moomoo.me',
-    'https://nitter.ramle.be',
+    'https://n.ramle.be',
     ]
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
