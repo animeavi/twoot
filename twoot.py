@@ -417,7 +417,7 @@ def main(argv):
         # Only consider item of class 'replying-to' that is a direct child
         # of class 'tweet-body' in status. Others can be in a quoted tweet. 
         replying_to_class = status.select("div.tweet-body > div.replying-to")
-        if replying_to_class is not None:
+        if len(replying_to_class) != 0:
             tweet_text += 'Replying to ' + replying_to_class[0].a.get_text() + '\n\n'
 
         # Check it the tweet is a retweet from somebody else
