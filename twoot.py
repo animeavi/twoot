@@ -414,7 +414,9 @@ def main(argv):
         photos = []
 
         # Add prefix if the tweet is a reply-to
-        replying_to_class = status.find('div', class_='replying-to')
+        # Only consider item of class 'replying-to' that is a direct child
+        # of class 'tweet-body' in status. Others can be in a quoted tweet. 
+        replying_to_class = status.select("div.tweet-body > div.replying-to")
         if replying_to_class is not None:
             tweet_text += 'Replying to ' + replying_to_class.a.get_text() + '\n\n'
 
