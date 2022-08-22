@@ -418,7 +418,7 @@ def main(argv):
         # of class 'tweet-body' in status. Others can be in a quoted tweet. 
         replying_to_class = status.select("div.tweet-body > div.replying-to")
         if replying_to_class is not None:
-            tweet_text += 'Replying to ' + replying_to_class.a.get_text() + '\n\n'
+            tweet_text += 'Replying to ' + replying_to_class[0].a.get_text() + '\n\n'
 
         # Check it the tweet is a retweet from somebody else
         if author_account.lower() != twit_account.lower():
