@@ -297,6 +297,8 @@ def main(argv):
     db = sql.cursor()
     db.execute('''CREATE TABLE IF NOT EXISTS toots (twitter_account TEXT, mastodon_instance TEXT,
                mastodon_account TEXT, tweet_id TEXT, toot_id TEXT)''')
+    db.execute('''CREATE UNIQUE INDEX IF NOT EXITS master ON toots (twitter_account,
+               mastodon_instance, mastodon_account, tweet_id)''')
 
     # Select random nitter instance to fetch updates from
     nitter_url = NITTER_URLS[random.randint(0, len(NITTER_URLS)-1)]
