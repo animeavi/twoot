@@ -37,7 +37,6 @@ import shutil
 NITTER_URLS = [
     'https://nitter.42l.fr',
     'https://nitter.pussthecat.org',
-    'https://nitter.nixnet.services',
     'https://nitter.fdn.fr',
     'https://nitter.unixfox.eu',
     'https://nitter.eu',
@@ -338,7 +337,7 @@ def main(argv):
 
     # Verify that download worked
     if twit_account_page.status_code != 200:
-        logging.fatal('The Nitter page did not download correctly from ' + url + '. Aborting')
+        logging.fatal('The Nitter page did not download correctly from ' + url + ' (' + twit_account_page.status_code + '). Aborting')
         exit(-1)
 
     logging.info('Nitter page downloaded successfully from ' + url)
