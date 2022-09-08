@@ -204,8 +204,8 @@ def login(instance, account, password):
     # Check ratelimit status
     logging.info('Ratelimit allowed requests: ' + Mastodon.ratelimit_limit)
     logging.info('Ratelimit remaining requests: ' + Mastodon.ratelimit_remaining)
-    logging.info('Ratelimit reset time: ' + Mastodon.ratelimit_reset)
-    logging.info('Ratelimit last call: ' + Mastodon.ratelimit_lastcall)
+    logging.info('Ratelimit reset time: ' + time.localtime(Mastodon.ratelimit_reset))
+    logging.info('Ratelimit last call: ' + time.localtime(Mastodon.ratelimit_lastcall))
     
     # Create Mastodon application if it does not exist yet
     if not os.path.isfile(instance + '.secret'):
