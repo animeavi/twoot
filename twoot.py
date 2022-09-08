@@ -201,6 +201,12 @@ def is_time_valid(timestamp, max_age, min_delay):
     return ret
 
 def login(instance, account, password):
+    # Check ratelimit status
+    logging.info('Ratelimit allowed requests: ' + Mastodon.ratelimit_limit)
+    logging.info('Ratelimit remaining requests: ' + Mastodon.ratelimit_remaining)
+    logging.info('Ratelimit reset time: ' + Mastodon.ratelimit_reset)
+    logging.info('Ratelimit last call: ' + Mastodon.ratelimit_lastcall)
+    
     # Create Mastodon application if it does not exist yet
     if not os.path.isfile(instance + '.secret'):
         try:
@@ -230,7 +236,7 @@ def login(instance, account, password):
         logging.info('Logging in to ' + instance)
 
     except MastodonError as me:
-        logging.fatal('ERROR: Login to ' + instance + ' Failed\n')
+        logging.fatal('ERROR: Login to ' + instance + ' Failed')
         logging.fatal(me)
         sys.exit(-1)
 
