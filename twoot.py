@@ -281,7 +281,7 @@ def main(argv):
     # Setup logging to file
     logging.basicConfig(
         filename=twit_account + '.log',
-        level=logging.WARN,
+        level=logging.INFO,
         format='%(asctime)s %(levelname)-8s %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
     )
