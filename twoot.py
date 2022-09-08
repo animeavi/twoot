@@ -41,7 +41,7 @@ NITTER_URLS = [
     'https://nitter.eu',
     'https://nitter.namazso.eu',
     'https://n.actionsack.com',
-    'https://nittereu.moomoo.me',
+    'https://nitter.moomoo.me',
     'https://n.ramle.be',
     ]
 
