@@ -237,8 +237,8 @@ def login(instance, account, password):
     # Check ratelimit status
     logging.info('Ratelimit allowed requests: ' + str(mastodon.ratelimit_limit))
     logging.info('Ratelimit remaining requests: ' + str(mastodon.ratelimit_remaining))
-    logging.info('Ratelimit reset time: ' + time.localtime(mastodon.ratelimit_reset))
-    logging.info('Ratelimit last call: ' + time.localtime(mastodon.ratelimit_lastcall))
+    logging.info('Ratelimit reset time: ' + str(time.localtime(mastodon.ratelimit_reset)))
+    logging.info('Ratelimit last call: ' + str(time.localtime(mastodon.ratelimit_lastcall)))
     
     return mastodon
 
