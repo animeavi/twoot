@@ -551,7 +551,7 @@ def main(argv):
                 logging.debug("Uploading video failed")
                 pass
 
-        else:  # Only upload pic if no video_file_listdeo was uploaded
+        else:  # Only upload pic if no video was uploaded
             # Upload photos
             for photo in tweet['photos']:
                 media = False
