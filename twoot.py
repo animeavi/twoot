@@ -200,6 +200,7 @@ def is_time_valid(timestamp, max_age, min_delay):
 
     return ret
 
+
 def login(instance, account, password):
     # Create Mastodon application if it does not exist yet
     if not os.path.isfile(instance + '.secret'):
@@ -239,7 +240,7 @@ def login(instance, account, password):
     logging.info('Ratelimit remaining requests: ' + str(mastodon.ratelimit_remaining))
     logging.info('Ratelimit reset time: ' + time.asctime(time.localtime(mastodon.ratelimit_reset)))
     logging.info('Ratelimit last call: ' + time.asctime(time.localtime(mastodon.ratelimit_lastcall)))
-    
+
     return mastodon
 
 
@@ -305,7 +306,7 @@ def main(argv):
                mastodon_instance, mastodon_account, tweet_id)''')
 
     # Select random nitter instance to fetch updates from
-    nitter_url = NITTER_URLS[random.randint(0, len(NITTER_URLS)-1)]
+    nitter_url = NITTER_URLS[random.randint(0, len(NITTER_URLS) - 1)]
 
     # **********************************************************
     # Load twitter page of user. Process all tweets and generate
@@ -348,9 +349,9 @@ def main(argv):
     logging.info('Nitter page downloaded successfully from ' + url)
 
     # DEBUG: Save page to file
-    #of = open(twit_account + '.html', 'w')
-    #of.write(twit_account_page.text)
-    #of.close()
+    # of = open(twit_account + '.html', 'w')
+    # of.write(twit_account_page.text)
+    # of.close()
 
     # Make soup
     soup = BeautifulSoup(twit_account_page.text, 'html.parser')
@@ -421,7 +422,7 @@ def main(argv):
 
         # Add prefix if the tweet is a reply-to
         # Only consider item of class 'replying-to' that is a direct child
-        # of class 'tweet-body' in status. Others can be in a quoted tweet. 
+        # of class 'tweet-body' in status. Others can be in a quoted tweet.
         replying_to_class = status.select("div.tweet-body > div.replying-to")
         if len(replying_to_class) != 0:
             tweet_text += 'Replying to ' + replying_to_class[0].a.get_text() + '\n\n'
@@ -516,10 +517,10 @@ def main(argv):
     logging.info(str(in_db_cnt) + ' tweets already in database')
 
     # DEBUG: Print extracted tweets
-    #for t in tweets:
-    #print(t)
+    # for t in tweets:
+    # print(t)
 
-    # Login to account on maston instance 
+    # Login to account on maston instance
     mastodon = None
     if len(tweets) != 0:
         mastodon = login(mast_instance, mast_account, mast_password)
@@ -550,7 +551,7 @@ def main(argv):
                 logging.debug("Uploading video failed")
                 pass
 
-        else:  # Only upload pic if no video was uploaded
+        else:  # Only upload pic if no video_file_listdeo was uploaded
             # Upload photos
             for photo in tweet['photos']:
                 media = False
