@@ -34,6 +34,10 @@ from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalA
 import subprocess
 import shutil
 
+# Set the desired verbosity of logging
+# One of logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL
+LOGGING_LEVEL = logging.INFO
+
 NITTER_URLS = [
     'https://nitter.42l.fr',
     'https://nitter.pussthecat.org',
@@ -236,10 +240,10 @@ def login(instance, account, password):
         sys.exit(-1)
 
     # Check ratelimit status
-    logging.info('Ratelimit allowed requests: ' + str(mastodon.ratelimit_limit))
-    logging.info('Ratelimit remaining requests: ' + str(mastodon.ratelimit_remaining))
-    logging.info('Ratelimit reset time: ' + time.asctime(time.localtime(mastodon.ratelimit_reset)))
-    logging.info('Ratelimit last call: ' + time.asctime(time.localtime(mastodon.ratelimit_lastcall)))
+    logging.debug('Ratelimit allowed requests: ' + str(mastodon.ratelimit_limit))
+    logging.debug('Ratelimit remaining requests: ' + str(mastodon.ratelimit_remaining))
+    logging.debug('Ratelimit reset time: ' + time.asctime(time.localtime(mastodon.ratelimit_reset)))
+    logging.debug('Ratelimit last call: ' + time.asctime(time.localtime(mastodon.ratelimit_lastcall)))
 
     return mastodon
 
@@ -282,7 +286,7 @@ def main(argv):
     # Setup logging to file
     logging.basicConfig(
         filename=twit_account + '.log',
-        level=logging.INFO,
+        level=LOGGING_LEVEL,
         format='%(asctime)s %(levelname)-8s %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
     )
