@@ -3,6 +3,10 @@
 Twoot is a python script that extracts tweets from a twitter feed and
 reposts them as toots on a Mastodon account.
 
+**UPDATE 14 SEP 2022** Added information about the status of throttling
+applied by the Mastodon instance in the debug log. Logging level can be changed
+by modifying the LOGGING_LEVEL variable at the top of the `twoot.py` file.
+
 **UPDATE 22 AUG 2022** Fixed bug that would incorrectly mark a new tweet
  as a "reply to" if it quoted a tweet that is a reply-to.
 
@@ -28,7 +32,7 @@ from tweets considered as "sensitive content"
 mobile twitter page without JavaScript after the breaking change
 of last week.
 
-# Features
+## Features
 
 * Fetch timeline of given users from twitter.com
 * Scrape html and formats tweets for post on mastodon
@@ -40,7 +44,7 @@ of last week.
 * Remember tweets already tooted to prevent double posting
 * Optionally post reply-to tweets on the mastodon account
 
-# usage
+## usage
 
 ```
 twoot.py [-h] -t <twitter account> -i <mastodon instance> -m <mastodon account>
@@ -48,7 +52,7 @@ twoot.py [-h] -t <twitter account> -i <mastodon instance> -m <mastodon account>
                 [-d <min delay (in mins>] [-c <max # of toots to post>]
 ```
 
-# arguments
+## arguments
 
 Assuming that the Twitter handle is @SuperDuperBot and the Mastodon account
 is @superduperbot@botsin.space
@@ -74,19 +78,21 @@ Default max age is 1 day. Decimal values are OK.
 
 Default min delay is 0 minutes.
 
-# installation
+## installation
 
 Make sure python3 is installed.
 
 Twoot depends on `beautifulsoup4` and `Mastodon.py` python modules.
 
 **Only If you plan to download videos** with the `-v` switch, are the additional dependencies required:
+
 * Python modules `m3u8` and `ffmpeg-python`
 * [ffmpeg](https://ffmpeg.org/download.html) (installed with the package manager of your distribution) 
 
+```sh
+pip install beautifulsoup4 Mastodon.py m3u8 ffmpeg-python
 ```
-> pip install beautifulsoup4 Mastodon.py m3u8 ffmpeg-python
-```
+
 In your user folder, execute `git clone https://gitlab.com/jeancf/twoot.git`
 to clone repo with twoot.py script.
 
@@ -98,7 +104,8 @@ ago:
 1-59/15 * * * * /path/to/twoot.py -t SuperDuperBot -i botsin.space -m superduperbot -p my_Sup3r-S4f3*pw -a 5 -d 15
 ```
 
-# Background
+## Background
+
 I started twoot when [tootbot](https://github.com/cquest/tootbot)
 stopped working. Tootbot relies on rss feeds from https://twitrss.me
 that broke when Twitter refreshed their web UI in July 2019.
