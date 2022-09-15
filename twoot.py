@@ -34,6 +34,9 @@ from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalA
 import subprocess
 import shutil
 
+# Number of records to keep in db table for each twitter account
+MAX_REC_COUNT = 50
+
 NITTER_URLS = [
     'https://nitter.42l.fr',
     'https://nitter.pussthecat.org',
@@ -510,10 +513,10 @@ def main(argv):
     logging.info(str(in_db_cnt) + ' tweets already in database')
 
     # DEBUG: Print extracted tweets
-    #for t in tweets:
-    #print(t)
+    # for t in tweets:
+    # print(t)
 
-    # Login to account on maston instance 
+    # Login to account on maston instance
     mastodon = None
     if len(tweets) != 0:
         mastodon = login(mast_instance, mast_account, mast_password)
@@ -597,6 +600,30 @@ def main(argv):
         shutil.rmtree('./output/' + twit_account)
     except FileNotFoundError:  # The directory does not exist
         pass
+
+    # Evaluate excess records in database
+    excess_count = 0
+
+    db.execute('SELECT count(*) FROM toots WHERE twitter_account=?', (twit_account,))
+    db_count = db.fetchone()
+    if db_count is not None:
+        excess_count = db_count[0] - MAX_REC_COUNT
+
+    # Delete excess records
+    if excess_count > 0:
+        db.execute('''
+            WITH excess AS (
+            SELECT tweet_id
+            FROM toots
+            WHERE twitter_account=?
+            ORDER BY timestamp ASC
+            LIMIT ?
+            )
+            DELETE from toots
+            WHERE tweet_id IN excess''', (twit_account, excess_count))
+        sql.commit()
+
+        logging.debug('Deleted ' + str(excess_count) + ' records from database.')
 
     logging.info('Run time : %2.1f seconds' % (time.time() - start_time))
     logging.info('_____________________________________________________________________________________')
