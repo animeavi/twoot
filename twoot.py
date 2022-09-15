@@ -616,14 +616,14 @@ def main(argv):
             SELECT tweet_id
             FROM toots
             WHERE twitter_account=?
-            ORDER BY timestamp ASC
+            ORDER BY toot_id ASC
             LIMIT ?
             )
             DELETE from toots
             WHERE tweet_id IN excess''', (twit_account, excess_count))
         sql.commit()
 
-        logging.debug('Deleted ' + str(excess_count) + ' records from database.')
+        logging.info('Deleted ' + str(excess_count) + ' old records from database.')
 
     logging.info('Run time : %2.1f seconds' % (time.time() - start_time))
     logging.info('_____________________________________________________________________________________')
