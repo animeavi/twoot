@@ -37,6 +37,10 @@ import shutil
 # Number of records to keep in db table for each twitter account
 MAX_REC_COUNT = 50
 
+# Set the desired verbosity of logging
+# One of logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL
+LOGGING_LEVEL = logging.INFO
+
 NITTER_URLS = [
     'https://nitter.42l.fr',
     'https://nitter.pussthecat.org',
@@ -44,7 +48,7 @@ NITTER_URLS = [
     'https://nitter.eu',
     'https://nitter.namazso.eu',
     'https://n.actionsack.com',
-    'https://nittereu.moomoo.me',
+    'https://nitter.moomoo.me',
     'https://n.ramle.be',
     ]
 
@@ -203,6 +207,7 @@ def is_time_valid(timestamp, max_age, min_delay):
 
     return ret
 
+
 def login(instance, account, password):
     # Create Mastodon application if it does not exist yet
     if not os.path.isfile(instance + '.secret'):
@@ -233,9 +238,15 @@ def login(instance, account, password):
         logging.info('Logging in to ' + instance)
 
     except MastodonError as me:
-        logging.fatal('ERROR: Login to ' + instance + ' Failed\n')
+        logging.fatal('ERROR: Login to ' + instance + ' Failed')
         logging.fatal(me)
         sys.exit(-1)
+
+    # Check ratelimit status
+    logging.debug('Ratelimit allowed requests: ' + str(mastodon.ratelimit_limit))
+    logging.debug('Ratelimit remaining requests: ' + str(mastodon.ratelimit_remaining))
+    logging.debug('Ratelimit reset time: ' + time.asctime(time.localtime(mastodon.ratelimit_reset)))
+    logging.debug('Ratelimit last call: ' + time.asctime(time.localtime(mastodon.ratelimit_lastcall)))
 
     return mastodon
 
@@ -278,7 +289,7 @@ def main(argv):
     # Setup logging to file
     logging.basicConfig(
         filename=twit_account + '.log',
-        level=logging.WARN,
+        level=LOGGING_LEVEL,
         format='%(asctime)s %(levelname)-8s %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
     )
@@ -302,7 +313,7 @@ def main(argv):
                mastodon_instance, mastodon_account, tweet_id)''')
 
     # Select random nitter instance to fetch updates from
-    nitter_url = NITTER_URLS[random.randint(0, len(NITTER_URLS)-1)]
+    nitter_url = NITTER_URLS[random.randint(0, len(NITTER_URLS) - 1)]
 
     # **********************************************************
     # Load twitter page of user. Process all tweets and generate
@@ -345,9 +356,9 @@ def main(argv):
     logging.info('Nitter page downloaded successfully from ' + url)
 
     # DEBUG: Save page to file
-    #of = open(twit_account + '.html', 'w')
-    #of.write(twit_account_page.text)
-    #of.close()
+    # of = open(twit_account + '.html', 'w')
+    # of.write(twit_account_page.text)
+    # of.close()
 
     # Make soup
     soup = BeautifulSoup(twit_account_page.text, 'html.parser')
@@ -418,7 +429,7 @@ def main(argv):
 
         # Add prefix if the tweet is a reply-to
         # Only consider item of class 'replying-to' that is a direct child
-        # of class 'tweet-body' in status. Others can be in a quoted tweet. 
+        # of class 'tweet-body' in status. Others can be in a quoted tweet.
         replying_to_class = status.select("div.tweet-body > div.replying-to")
         if len(replying_to_class) != 0:
             tweet_text += 'Replying to ' + replying_to_class[0].a.get_text() + '\n\n'
