@@ -47,7 +47,6 @@ NITTER_URLS = [
     'https://nitter.fdn.fr',
     'https://nitter.eu',
     'https://nitter.namazso.eu',
-    'https://n.actionsack.com',
     'https://nitter.moomoo.me',
     'https://n.ramle.be',
     ]
@@ -604,7 +603,7 @@ def main(argv):
                        (twit_account, mast_instance, mast_account, tweet['tweet_id'], toot['id']))
             sql.commit()
 
-    logging.info(str(posted_cnt) + ' Tweets posted to Mastodon')
+    logging.info(str(posted_cnt) + ' tweets posted to Mastodon')
 
     # Cleanup downloaded video files
     try:
