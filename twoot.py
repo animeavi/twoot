@@ -578,6 +578,7 @@ def main(argv):
                         pass
 
         # Post toot
+        toot = {}
         try:
             mastodon = Mastodon(
                 access_token=mast_account + '.secret',
