@@ -342,9 +342,12 @@ def main(argv):
 
     # Download twitter page of user.
     try:
-        twit_account_page = session.get(url, headers=headers)
+        twit_account_page = session.get(url, headers=headers, timeout=5)
     except requests.exceptions.ConnectionError:
         logging.fatal('Host did not respond when trying to download ' + url)
+        exit(-1)
+    except requests.exceptions.Timeout:
+        logging.fatal(nitter_url + ' took too long to respond')
         exit(-1)
 
     # Verify that download worked
