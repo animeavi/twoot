@@ -156,26 +156,23 @@ def process_attachments(nitter_url, attachments_container, get_vids, twit_accoun
     vid_class = attachments_container.find('div', class_='video-container')
     if vid_class is not None:
         if get_vids:
-            # Download video from twitter and store in filesystem. Running as subprocess to avoid
-            # requirement to install ffmpeg and ffmpeg-python for those that do not want to post videos
-            try:
-                video_file = os.path.join('https://twitter.com', author_account, 'status', status_id)
-                # Set output location to ./output/twit_account/status_id
-                dl_feedback = subprocess.run(
-                    ["youtube-dl", video_file, "-ooutput/" + twit_account + "/" + status_id + "/%(id)s.%(ext)s", "-f best[width<=500]"],
-                    timeout=300
-                )
-                if dl_feedback.returncode != 0:
-                    logging.warning('Video in tweet ' + status_id + ' from ' + twit_account + ' failed to download')
+            import youtube_dl
+
+            video_file = os.path.join('https://twitter.com', author_account, 'status', status_id)
+            ydl_opts = {
+                'outtmpl': "output/" + twit_account + "/" + status_id + "/%(id)s.%(ext)s",
+                'format': "best[width<=500]",
+                'socket_timeout': 60,
+            }
+
+            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                try:
+                    ydl.download([video_file])
+                except Exception as e:
+                    logging.warn('Error downloading twitter video: ' + str(e))
                     vid_in_tweet = True
                 else:
                     logging.debug('downloaded twitter video from attachments')
-
-            except OSError:
-                logging.fatal("Could not execute twitterdl.py (is it there? Is it set as executable?)")
-                sys.exit(-1)
-        else:
-            vid_in_tweet = True
 
     return pics, vid_in_tweet
 
@@ -192,6 +189,7 @@ def contains_class(body_classes, some_class):
             found = True
 
     return found
+
 
 def is_time_valid(timestamp, max_age, min_delay):
     ret = True
@@ -279,10 +277,10 @@ def main(argv):
     cap = int(args['c'])
 
     # Remove previous log file
-    #try:
-    #    os.remove(twit_account + '.log')
-    #except FileNotFoundError:
-    #    pass
+    try:
+        os.remove(twit_account + '.log')
+    except FileNotFoundError:
+        pass
 
     # Setup logging to file
     logging.basicConfig(
