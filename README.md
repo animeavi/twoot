@@ -90,11 +90,10 @@ Twoot depends on `beautifulsoup4` and `Mastodon.py` python modules.
 
 **Only If you plan to download videos** with the `-v` switch, are the additional dependencies required:
 
-* Python modules `m3u8` and `ffmpeg-python`
-* [ffmpeg](https://ffmpeg.org/download.html) (installed with the package manager of your distribution) 
+* Python module `youtube-dl2`
 
 ```sh
-pip install beautifulsoup4 Mastodon.py m3u8 ffmpeg-python
+pip install beautifulsoup4 Mastodon.py youtube-dl2
 ```
 
 In your user folder, execute `git clone https://gitlab.com/jeancf/twoot.git`
