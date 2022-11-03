@@ -39,7 +39,7 @@ MAX_REC_COUNT = 50
 
 # Set the desired verbosity of logging
 # One of logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL
-LOGGING_LEVEL = logging.INFO
+LOGGING_LEVEL = logging.DEBUG
 
 NITTER_URLS = [
     'https://nitter.42l.fr',
@@ -143,7 +143,7 @@ def process_attachments(nitter_url, attachments_container, get_vids, twit_accoun
             r.raise_for_status()
             # Download chunks and write them to file
             with open('gif_video.mp4', 'wb') as f:
-                for chunk in r.iter_content(chunk_size=16*1024):
+                for chunk in r.iter_content(chunk_size=16 * 1024):
                     f.write(chunk)
 
         logging.debug('downloaded video of GIF animation from attachments')
@@ -155,15 +155,14 @@ def process_attachments(nitter_url, attachments_container, get_vids, twit_accoun
     vid_in_tweet = False
     vid_class = attachments_container.find('div', class_='video-container')
     if vid_class is not None:
-        video_file = os.path.join('https://twitter.com', author_account, 'status', status_id)
         if get_vids:
             # Download video from twitter and store in filesystem. Running as subprocess to avoid
             # requirement to install ffmpeg and ffmpeg-python for those that do not want to post videos
             try:
+                video_file = os.path.join('https://twitter.com', author_account, 'status', status_id)
                 # Set output location to ./output/twit_account/status_id
                 dl_feedback = subprocess.run(
-                    ["./twitterdl.py", video_file, "-ooutput/" + twit_account + "/" + status_id, "-w 500"],
-                    capture_output=True,
+                    ["youtube-dl", video_file, "-ooutput/" + twit_account + "/" + status_id + "/%(id)s.%(ext)s", "-f best[width<=500]"],
                     timeout=300
                 )
                 if dl_feedback.returncode != 0:
@@ -494,10 +493,6 @@ def main(argv):
 
         video_path = Path('./output') / twit_account / status_id
         if video_path.exists():
-            # Take the first subdirectory of video path (named after original poster of video)
-            video_path = [p for p in video_path.iterdir() if p.is_dir()][0]
-            # Take again the first subdirectory of video path (named after status id of original post where video is attached)
-            video_path = [p for p in video_path.iterdir() if p.is_dir()][0]
             # list video files
             video_file_list = list(video_path.glob('*.mp4'))
             if len(video_file_list) != 0:
