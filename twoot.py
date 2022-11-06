@@ -41,6 +41,9 @@ MAX_REC_COUNT = 50
 # One of logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL
 LOGGING_LEVEL = logging.DEBUG
 
+# How many seconds to wait before giving up on a download (except video download)
+HTTPS_REQ_TIMEOUT = 10
+
 NITTER_URLS = [
     'https://nitter.42l.fr',
     'https://nitter.pussthecat.org',
@@ -139,14 +142,20 @@ def process_attachments(nitter_url, attachments_container, get_vids, twit_accoun
         # Open directory for writing file
         orig_dir = os.getcwd()
         os.chdir(video_path)
-        with requests.get(gif_video_file, stream=True) as r:
-            r.raise_for_status()
-            # Download chunks and write them to file
-            with open('gif_video.mp4', 'wb') as f:
-                for chunk in r.iter_content(chunk_size=16 * 1024):
-                    f.write(chunk)
+        with requests.get(gif_video_file, stream=True, timeout=HTTPS_REQ_TIMEOUT) as r:
+            try:
+                # Raise exception if response code is not 200
+                r.raise_for_status()
+                # Download chunks and write them to file
+                with open('gif_video.mp4', 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=16 * 1024):
+                        f.write(chunk)
 
-        logging.debug('downloaded video of GIF animation from attachments')
+                logging.debug('Downloaded video of GIF animation from attachments')
+            except:  # Don't do anything if video can't be found or downloaded
+                logging.debug('Could not download video of GIF animation from attachments')
+                pass
+
 
         # Close directory
         os.chdir(orig_dir)
@@ -340,9 +349,12 @@ def main(argv):
 
     # Download twitter page of user.
     try:
-        twit_account_page = session.get(url, headers=headers)
+        twit_account_page = session.get(url, headers=headers, timeout=HTTPS_REQ_TIMEOUT)
     except requests.exceptions.ConnectionError:
         logging.fatal('Host did not respond when trying to download ' + url)
+        exit(-1)
+    except requests.exceptions.Timeout:
+        logging.fatal(nitter_url + ' took too long to respond')
         exit(-1)
 
     # Verify that download worked
@@ -470,7 +482,7 @@ def main(argv):
                 link_url = m.group(0)
                 if link_url.endswith(".html"):  # Only process a web page
                     try:
-                        r = requests.get(link_url, timeout=10)
+                        r = requests.get(link_url, timeout=HTTPS_REQ_TIMEOUT)
                         if r.status_code == 200:
                             # Matches the first instance of either twitter:image or twitter:image:src meta tag
                             match = re.search(r'<meta name="twitter:image(?:|:src)" content="(.+?)".*?>', r.text)
@@ -558,7 +570,7 @@ def main(argv):
                 # Download picture
                 try:
                     logging.debug('downloading picture')
-                    media = requests.get(photo)
+                    media = requests.get(photo, timeout=HTTPS_REQ_TIMEOUT)
                 except:  # Picture cannot be downloaded for any reason
                     pass
 
