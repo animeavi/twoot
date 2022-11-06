@@ -278,10 +278,10 @@ def main(argv):
     cap = int(args['c'])
 
     # Remove previous log file
-    try:
-        os.remove(twit_account + '.log')
-    except FileNotFoundError:
-        pass
+    # try:
+    #    os.remove(twit_account + '.log')
+    #except FileNotFoundError:
+    #    pass
 
     # Setup logging to file
     logging.basicConfig(
