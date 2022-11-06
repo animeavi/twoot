@@ -163,6 +163,7 @@ def process_attachments(nitter_url, attachments_container, get_vids, twit_accoun
                 'outtmpl': "output/" + twit_account + "/" + status_id + "/%(id)s.%(ext)s",
                 'format': "best[width<=500]",
                 'socket_timeout': 60,
+                'quiet': True,
             }
 
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
