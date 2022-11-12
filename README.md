@@ -3,6 +3,14 @@
 Twoot is a python script that extracts tweets from a twitter feed and
 reposts them as toots on a Mastodon account.
 
+**UPDATE 12 NOV 2022** VERSION 2.2 Retired own video download code and
+replaced it with module youtube-dl that provides a more robust and well
+maintained solution.
+
+> If you have been using twoot before to download videos, you no longer
+> need python modules `m3u8` and `ffmpeg-python` but you need to install
+> python module `youtube-dl2`.
+
 **UPDATE 08 OCT 2022** VERSION 2.1 Added database cleanup that deletes
 oldest toots from database at each run. Keep MAX_REC_COUNT (50 by default)
 rows in db for each twitter feed.
@@ -19,8 +27,9 @@ number of toots posted on the mastodon account.
 
 **UPDATE 19 DEC 2020** VERSION 2.0 Twitter's *no-javascript* version
 has been retired. Twoot has been rewritten to get content from
-[nitter.net](https://nitter.net) which is a javascript-free mirror of
-twitter. As a bonus (or a curse?) twoot now also supports animated GIFs.
+[nitter.net](https://nitter.net) or one of its mirrors which is a
+javascript-free mirror of twitter. As a bonus (or a curse?) twoot now
+also supports animated GIFs.
 
 **UPDATE 05 APR 2020** VERSION 1.0. Twoot can now optionally download
 videos from Twitter and upload them on Mastodon.
@@ -74,6 +83,7 @@ is @superduperbot@botsin.space
 | -c    | Max number of toots allowed to post (cap)        | `1`                | No  |
 
 When using the `-v` switch consider:
+
 * whether the copyright of the content that you want to cross-post allows it
 * the storage / transfer limitations of the Mastodon instance that you are posting to
 * the upstream bandwidth that you may consume on your internet connection
@@ -91,6 +101,7 @@ Twoot depends on `beautifulsoup4` and `Mastodon.py` python modules.
 **Only If you plan to download videos** with the `-v` switch, are the additional dependencies required:
 
 * Python module `youtube-dl2`
+* [ffmpeg](https://ffmpeg.org/download.html) (installed with the package manager of your distribution)
 
 ```sh
 pip install beautifulsoup4 Mastodon.py youtube-dl2
