@@ -62,7 +62,7 @@ of last week.
 ```
 twoot.py [-h] -t <twitter account> -i <mastodon instance> -m <mastodon account>
                 -p <mastodon password> [-r] [-v] [-a <max age in days)>]
-                [-d <min delay (in mins>] [-c <max # of toots to post>]
+                [-d <min delay (in mins)>] [-c <max # of toots to post>]
 ```
 
 ## arguments
@@ -79,7 +79,7 @@ is @superduperbot@botsin.space
 | -v    | upload videos to Mastodon                        | *N/A*              | No  |
 | -r    | Post reply-to tweets (ignored by default)        | *N/A*              | No  |
 | -a    | Max. age of tweet to post (in days)              | `5`                | No  |
-| -d    | Min. delay before posting new tweet (in minutes) | `15`               | No  |
+| -d    | Min. age before posting new tweet (in minutes)   | `15`               | No  |
 | -c    | Max number of toots allowed to post (cap)        | `1`                | No  |
 
 When using the `-v` switch consider:
@@ -91,6 +91,8 @@ When using the `-v` switch consider:
 Default max age is 1 day. Decimal values are OK.
 
 Default min delay is 0 minutes.
+
+No limitation is applied to the number of toots uploaded if `-c` is not specified.
 
 ## installation
 
