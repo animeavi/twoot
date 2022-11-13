@@ -415,7 +415,7 @@ def main(argv):
         # Check if retweets must be skipped
         if suppress_retweets:
             # Check if this tweet is a retweet
-            if len(status.select("div.tweet-body > div > div.tweet-header")) != 0:
+            if len(status.select("div.tweet-body > div > div.retweet-header")) != 0:
                 logging.debug("Retweet ignored per command-line configuration")
                 continue
 
@@ -453,7 +453,7 @@ def main(argv):
             tweet_text += 'Replying to ' + replying_to_class[0].a.get_text() + '\n\n'
 
         # Check it the tweet is a retweet from somebody else
-        if len(status.select("div.tweet-body > div > div.tweet-header")) != 0:
+        if len(status.select("div.tweet-body > div > div.retweet-header")) != 0:
             tweet_text = 'RT from ' + author + ' (@' + author_account + ')\n\n'
 
         # extract iterator over tweet text contents
