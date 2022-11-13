@@ -120,6 +120,20 @@ ago:
 1-59/15 * * * * /path/to/twoot.py -t SuperDuperBot -i botsin.space -m superduperbot -p my_Sup3r-S4f3*pw -a 5 -d 15
 ```
 
+## Examples
+
+Twoot is known to be used for the following feeds (older first):
+
+* [@internetofshit@botsin.space](https://botsin.space/@internetofshit)
+* [@hackaday@botsin.space](https://botsin.space/@hackaday)
+* [@todayilearned@botsin.space](https://botsin.space/@todayilearned)
+* [@moznews@noc.social](https://noc.social/@moznews)
+* [@hackster_io@noc.social](https://noc.social/@hackster_io)
+* [@cnxsoft@noc.social](https://noc.social/@cnxsoft)
+* [@unrealengine@noc.social](https://noc.social/@unrealengine)
+* [@phoronix@noc.social](https://noc.social/@phoronix)
+* [@uanews@fed.celp.de](https://fed.celp.de/@uanews)
+
 ## Background
 
 I started twoot when [tootbot](https://github.com/cquest/tootbot)
