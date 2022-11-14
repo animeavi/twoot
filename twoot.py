@@ -455,8 +455,6 @@ def main(argv):
 
         # Check it the tweet is a retweet from somebody else
         if len(status.select("div.tweet-body > div > div.retweet-header")) != 0:
-            # TEMP DEBUG
-            login.debug("retweet DIV found in " + status)
             tweet_text = 'RT from ' + author + ' (@' + author_account + ')\n\n'
 
         # extract iterator over tweet text contents

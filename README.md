@@ -13,7 +13,7 @@ maintained solution.
 
 **UPDATE 08 OCT 2022** VERSION 2.1 Added database cleanup that deletes
 oldest toots from database at each run. Keep MAX_REC_COUNT (50 by default)
-rows in db for each twitter feed.
+rows in db for each twitter feed.t
 
 **UPDATE 14 SEP 2022** Added information about the status of throttling
 applied by the Mastodon instance in the debug log. Logging level can be changed
