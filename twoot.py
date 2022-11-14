@@ -307,6 +307,7 @@ def main(argv):
     logging.info('    -i ' + mast_instance)
     logging.info('    -m ' + mast_account)
     logging.info('    -r ' + str(tweets_and_replies))
+    logging.info('    -s ' + str(suppress_retweets))
     logging.info('    -v ' + str(get_vids))
     logging.info('    -a ' + str(max_age))
     logging.info('    -d ' + str(min_delay))
