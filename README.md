@@ -3,65 +3,31 @@
 Twoot is a python script that extracts tweets from a twitter feed and
 reposts them as toots on a Mastodon account.
 
-**UPDATE 12 NOV 2022** VERSION 2.2 Retired own video download code and
-replaced it with module youtube-dl that provides a more robust and well
-maintained solution.
+**UPDATE 15 NOV 2022** VERSION 2.3 Added command-line option (`-s`) to
+skip retweets. With this option, retweets will be ignored and not posted
+on Mastodon.
 
-> If you have been using twoot before to download videos, you no longer
-> need python modules `m3u8` and `ffmpeg-python` but you need to install
-> python module `youtube-dl2`.
-
-**UPDATE 08 OCT 2022** VERSION 2.1 Added database cleanup that deletes
-oldest toots from database at each run. Keep MAX_REC_COUNT (50 by default)
-rows in db for each twitter feed.
-
-**UPDATE 14 SEP 2022** Added information about the status of throttling
-applied by the Mastodon instance in the debug log. Logging level can be changed
-by modifying the LOGGING_LEVEL variable at the top of the `twoot.py` file.
-
-**UPDATE 22 AUG 2022** Fixed bug that would incorrectly mark a new tweet
- as a "reply to" if it quoted a tweet that is a reply-to.
-
-**UPDATE 01 JUN 2021** Added command line argument (`-c`) to limit the
-number of toots posted on the mastodon account.
-
-**UPDATE 19 DEC 2020** VERSION 2.0 Twitter's *no-javascript* version
-has been retired. Twoot has been rewritten to get content from
-[nitter.net](https://nitter.net) or one of its mirrors which is a
-javascript-free mirror of twitter. As a bonus (or a curse?) twoot now
-also supports animated GIFs.
-
-**UPDATE 05 APR 2020** VERSION 1.0. Twoot can now optionally download
-videos from Twitter and upload them on Mastodon.
-
-**UPDATE 17 MAR 2020** Added command line switch (`-r`) to also post
-reply-to tweets on the mastodon account. They will not be included by
-default anymore.
-
-**UPDATE 06 MAR 2020**  Added functionality to automatically get images
-from tweets considered as "sensitive content"
-
-**UPDATE 15 FEB 2020**  Twoot has been rewritten to make use of the
-mobile twitter page without JavaScript after the breaking change
-of last week.
+> Previous updates can be found in CHANGELOG.
 
 ## Features
 
-* Fetch timeline of given users from twitter.com
-* Scrape html and formats tweets for post on mastodon
+* Fetch timeline of given user from twitter.com (through nitter instance)
+* Scrape html and format tweets for post on mastodon
 * Emojis supported
-* Optionally upload videos from tweet to Mastodon
 * Upload images from tweet to Mastodon
+* Optionally upload videos from tweet to Mastodon
 * Specify maximum age of tweet to be considered
 * Specify minimum delay before considering a tweet for upload
 * Remember tweets already tooted to prevent double posting
 * Optionally post reply-to tweets on the mastodon account
+* Optionally ignore retweets
+* Allows rate-limiting posts to Mastodon instance
 
 ## usage
 
 ```
 twoot.py [-h] -t <twitter account> -i <mastodon instance> -m <mastodon account>
-                -p <mastodon password> [-r] [-v] [-a <max age in days)>]
+                -p <mastodon password> [-r] [-s] [-v] [-a <max age in days)>]
                 [-d <min delay (in mins)>] [-c <max # of toots to post>]
 ```
 
@@ -78,6 +44,7 @@ is @superduperbot@botsin.space
 | -p    | Mastodon password                                | `my_Sup3r-S4f3*pw` | Yes |
 | -v    | upload videos to Mastodon                        | *N/A*              | No  |
 | -r    | Post reply-to tweets (ignored by default)        | *N/A*              | No  |
+| -s    | Skip retweets (posted by default)                | *N/A*              | No  |
 | -a    | Max. age of tweet to post (in days)              | `5`                | No  |
 | -d    | Min. age before posting new tweet (in minutes)   | `15`               | No  |
 | -c    | Max number of toots allowed to post (cap)        | `1`                | No  |

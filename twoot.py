@@ -268,6 +268,7 @@ def main(argv):
     parser.add_argument('-m', metavar='<mastodon account>', action='store', required=True)
     parser.add_argument('-p', metavar='<mastodon password>', action='store', required=True)
     parser.add_argument('-r', action='store_true', help='Also post replies to other tweets')
+    parser.add_argument('-s', action='store_true', help='Suppress retweets')
     parser.add_argument('-v', action='store_true', help='Ingest twitter videos and upload to Mastodon instance')
     parser.add_argument('-a', metavar='<max age (in days)>', action='store', type=float, default=1)
     parser.add_argument('-d', metavar='<min delay (in mins)>', action='store', type=float, default=0)
@@ -281,6 +282,7 @@ def main(argv):
     mast_account = args['m']
     mast_password = args['p']
     tweets_and_replies = args['r']
+    suppress_retweets = args['s']
     get_vids = args['v']
     max_age = float(args['a'])
     min_delay = float(args['d'])
@@ -305,6 +307,7 @@ def main(argv):
     logging.info('    -i ' + mast_instance)
     logging.info('    -m ' + mast_account)
     logging.info('    -r ' + str(tweets_and_replies))
+    logging.info('    -s ' + str(suppress_retweets))
     logging.info('    -v ' + str(get_vids))
     logging.info('    -a ' + str(max_age))
     logging.info('    -d ' + str(min_delay))
@@ -410,6 +413,13 @@ def main(argv):
             logging.debug("Tweet outside valid time range, skipping")
             continue
 
+        # Check if retweets must be skipped
+        if suppress_retweets:
+            # Check if this tweet is a retweet
+            if len(status.select("div.tweet-body > div > div.retweet-header")) != 0:
+                logging.debug("Retweet ignored per command-line configuration")
+                continue
+
         # Check in database if tweet has already been posted
         db.execute("SELECT * FROM toots WHERE twitter_account=? AND mastodon_instance=? AND mastodon_account=? AND tweet_id=?",
                    (twit_account, mast_instance, mast_account, tweet_id))
@@ -444,7 +454,7 @@ def main(argv):
             tweet_text += 'Replying to ' + replying_to_class[0].a.get_text() + '\n\n'
 
         # Check it the tweet is a retweet from somebody else
-        if author_account.lower() != twit_account.lower():
+        if len(status.select("div.tweet-body > div > div.retweet-header")) != 0:
             tweet_text = 'RT from ' + author + ' (@' + author_account + ')\n\n'
 
         # extract iterator over tweet text contents
