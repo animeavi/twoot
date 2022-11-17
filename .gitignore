@@ -4,5 +4,7 @@ venv/
 *.secret
 *.sh
 *.log
+*.png
+*.xcf
 twoot.db
 __pycache__

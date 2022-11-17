@@ -18,21 +18,22 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys
-import logging
 import argparse
+import datetime
+import logging
 import os
 import random
+import re
+import shutil
+import sqlite3
+import sys
+import time
+from pathlib import Path
+from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
+
 import requests
 from bs4 import BeautifulSoup, element
-import sqlite3
-import datetime
-import time
-import re
-from pathlib import Path
 from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalArgumentError
-import subprocess
-import shutil
 
 # Number of records to keep in db table for each twitter account
 MAX_REC_COUNT = 50
@@ -52,7 +53,7 @@ NITTER_URLS = [
     'https://nitter.namazso.eu',
     'https://nitter.moomoo.me',
     'https://n.ramle.be',
-    ]
+]
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
 USER_AGENTS = [
@@ -60,7 +61,53 @@ USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:103.0) Gecko/20100101 Firefox/103.0',
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 12_5_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6 Safari/605.1.15',
     'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36 Vivaldi/5.4.2753.37',
+]
+
+
+def _remove_tracker_params(query_str):
+    """
+    private function
+    Given a query string from a URL, strip out the known trackers
+    :param query_str: query to be cleaned
+    :return: query cleaned
+    """
+    # Avalaible URL tracking parameters :
+    # UTM tags by Google Ads, M$ Ads, ...
+    # tag by TikTok
+    # tags by Snapchat
+    # tags by Facebook
+    params_to_remove = [
+        "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+        "mkt_tok",
+        "campaign_name", "ad_set_name", "campaign_id", "ad_set_id",
+        "campaign_name", "ad_set_name", "ad_set_id", "media", "interest_group_name", "ad_set_id"
     ]
+    query_to_clean = dict(parse_qsl(query_str, keep_blank_values=True))
+    query_cleaned = [(k, v) for k, v in query_to_clean.items() if not k in params_to_remove]
+    return urlencode(query_cleaned, doseq=True)
+
+
+def clean_url(dirty_url):
+    """
+    Given a URL, return it with the UTM parameters removed from query and fragment
+    :param dirty_url: url to be cleaned
+    :return: url cleaned
+    >>> clean_url('https://exemple.com/video/this-aerial-ropeway?utm_source=Twitter&utm_medium=video&utm_campaign=organic&utm_content=Nov13&a=aaa&b=1#mkt_tok=tik&mkt_tik=tok')
+    'https://exemple.com/video/this-aerial-ropeway?a=aaa&b=1#mkt_tik=tok'
+    """
+
+    url_parsed = urlparse(dirty_url)
+
+    cleaned_url = urlunparse([
+        url_parsed.scheme,
+        url_parsed.netloc,
+        url_parsed.path,
+        url_parsed.params,
+        _remove_tracker_params(url_parsed.query),
+        _remove_tracker_params(url_parsed.fragment)
+    ])
+
+    return cleaned_url
 
 
 def process_media_body(tt_iter):
@@ -88,7 +135,7 @@ def process_media_body(tt_iter):
                 tweet_text += tag_text
             else:
                 # This is a real link, keep url
-                tweet_text += tag.get('href')
+                tweet_text += clean_url(tag.get('href'))
         else:
             logging.warning("No handler for tag in twitter text: " + tag.prettify())
 
@@ -155,7 +202,6 @@ def process_attachments(nitter_url, attachments_container, get_vids, twit_accoun
             except:  # Don't do anything if video can't be found or downloaded
                 logging.debug('Could not download video of GIF animation from attachments')
                 pass
-
 
         # Close directory
         os.chdir(orig_dir)
@@ -291,7 +337,7 @@ def main(argv):
     # Remove previous log file
     # try:
     #    os.remove(twit_account + '.log')
-    #except FileNotFoundError:
+    # except FileNotFoundError:
     #    pass
 
     # Setup logging to file
@@ -340,7 +386,7 @@ def main(argv):
     # Update default headers with randomly selected user agent
     headers.update(
         {
-            'User-Agent': USER_AGENTS[random.randint(0, len(USER_AGENTS)-1)],
+            'User-Agent': USER_AGENTS[random.randint(0, len(USER_AGENTS) - 1)],
             'Cookie': 'replaceTwitter=; replaceYouTube=; hlsPlayback=on; proxyVideos=',
         }
     )
@@ -362,7 +408,8 @@ def main(argv):
 
     # Verify that download worked
     if twit_account_page.status_code != 200:
-        logging.fatal('The Nitter page did not download correctly from ' + url + ' (' + str(twit_account_page.status_code) + '). Aborting')
+        logging.fatal('The Nitter page did not download correctly from ' + url + ' (' + str(
+            twit_account_page.status_code) + '). Aborting')
         exit(-1)
 
     logging.info('Nitter page downloaded successfully from ' + url)
@@ -421,8 +468,9 @@ def main(argv):
                 continue
 
         # Check in database if tweet has already been posted
-        db.execute("SELECT * FROM toots WHERE twitter_account=? AND mastodon_instance=? AND mastodon_account=? AND tweet_id=?",
-                   (twit_account, mast_instance, mast_account, tweet_id))
+        db.execute(
+            "SELECT * FROM toots WHERE twitter_account=? AND mastodon_instance=? AND mastodon_account=? AND tweet_id=?",
+            (twit_account, mast_instance, mast_account, tweet_id))
         tweet_in_db = db.fetchone()
 
         if tweet_in_db is not None:
@@ -476,7 +524,8 @@ def main(argv):
         # Process attachment: capture image or .mp4 url or download twitter video
         attachments_class = status.find('div', class_='attachments')
         if attachments_class is not None:
-            pics, vid_in_tweet = process_attachments(nitter_url, attachments_class, get_vids, twit_account, status_id, author_account)
+            pics, vid_in_tweet = process_attachments(nitter_url, attachments_class, get_vids, twit_account, status_id,
+                                                     author_account)
             photos.extend(pics)
             if vid_in_tweet:
                 tweet_text += '\n\n[Video embedded in original tweet]'
@@ -569,7 +618,8 @@ def main(argv):
                 logging.debug("Uploading video to Mastodon")
                 media_posted = mastodon.media_post(tweet['video'])
                 media_ids.append(media_posted['id'])
-            except (MastodonAPIError, MastodonIllegalArgumentError, TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
+            except (MastodonAPIError, MastodonIllegalArgumentError,
+                    TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
                 logging.debug("Uploading video failed")
                 pass
 
@@ -590,7 +640,8 @@ def main(argv):
                         logging.debug('uploading picture to Mastodon')
                         media_posted = mastodon.media_post(media.content, mime_type=media.headers['content-type'])
                         media_ids.append(media_posted['id'])
-                    except (MastodonAPIError, MastodonIllegalArgumentError, TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
+                    except (MastodonAPIError, MastodonIllegalArgumentError,
+                            TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
                         pass
 
         # Post toot
