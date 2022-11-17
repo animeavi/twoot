@@ -1,0 +1,17 @@
+[config]
+twitter_account = "SuperDuper"
+mastodon_instance = "botsin.space"
+mastodon_user = "superduperbot"
+mastodon_password = "my_Sup3r-S4f3*pw"
+
+[options]
+upload_videos = false
+post_reply_to = false
+skip_retweets = false
+remove_trackers_from_URL = false
+substitute_invidious = false
+substitute_nitter = false
+
+tweet_max_age = 5
+tweet_delay = 15
+twoot_cap = 1
