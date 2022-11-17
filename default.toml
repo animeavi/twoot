@@ -1,17 +1,37 @@
 [config]
+# twitter account name without '@'
 twitter_account = "SuperDuper"
+
+# Domain name of Mastodon instance
 mastodon_instance = "botsin.space"
+
+# Mastodon username
 mastodon_user = "superduperbot"
-mastodon_password = "my_Sup3r-S4f3*pw"
 
 [options]
+# Download videos from twitter and upload them on Mastodon
 upload_videos = false
+
+# Also post the "reply-to" tweets from twitter account
 post_reply_to = false
+
+# Do not post the retweets of other twitter accounts
 skip_retweets = false
+
+# Clean up URLs in tweets to remove trackers
 remove_trackers_from_URL = false
+
+# Rewrite URLs to use invidious instance instead of youtube
 substitute_invidious = false
+
+# Rewrite URLs to use nitter instance instead of twitter
 substitute_nitter = false
 
-tweet_max_age = 5
+# Maximum age of tweet to post (in days, decimal values accepted)
+tweet_max_age = 1
+
+# Minimum age of tweet before posting (in minutes)
 tweet_delay = 15
+
+# Maximum number of toots to post in this run
 twoot_cap = 1
