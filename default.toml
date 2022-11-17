@@ -18,13 +18,13 @@ post_reply_to = false
 # Do not post the retweets of other twitter accounts
 skip_retweets = false
 
-# Clean up URLs in tweets to remove trackers
+# Clean up URLs in tweets to remove trackers  (UNIMPLEMENTED)
 remove_trackers_from_URL = false
 
-# Rewrite URLs to use invidious instance instead of youtube
+# Rewrite URLs to use invidious instance instead of youtube  (UNIMPLEMENTED)
 substitute_invidious = false
 
-# Rewrite URLs to use nitter instance instead of twitter
+# Rewrite URLs to use nitter instance instead of twitter  (UNIMPLEMENTED)
 substitute_nitter = false
 
 # Maximum age of tweet to post (in days, decimal values accepted)
