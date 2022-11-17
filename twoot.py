@@ -80,7 +80,8 @@ def _remove_tracker_params(query_str):
         "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
         "mkt_tok",
         "campaign_name", "ad_set_name", "campaign_id", "ad_set_id",
-        "campaign_name", "ad_set_name", "ad_set_id", "media", "interest_group_name", "ad_set_id"
+        "media", "interest_group_name",
+        "xtor"
     ]
     query_to_clean = dict(parse_qsl(query_str, keep_blank_values=True))
     query_cleaned = [(k, v) for k, v in query_to_clean.items() if not k in params_to_remove]
