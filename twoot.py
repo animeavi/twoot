@@ -51,8 +51,8 @@ NITTER_URLS = [
     'https://nitter.fdn.fr',
     'https://nitter.eu',
     'https://nitter.namazso.eu',
-    'https://nitter.moomoo.me',
-    'https://n.ramle.be',
+    'https://n.l5.ca',
+    'https://nitter.nl',
 ]
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
