@@ -522,7 +522,7 @@ def main(argv):
         tt_iter = status.find('div', class_='tweet-content media-body').children
 
         # Process text of tweet
-        tweet_text += process_media_body(tt_iter)
+        tweet_text += process_media_body(tt_iter, remove_trackers)
 
         # Process quote: append link to tweet_text
         quote_div = status.find('a', class_='quote-link')
