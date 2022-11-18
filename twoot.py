@@ -46,7 +46,7 @@ LOGGING_LEVEL = logging.DEBUG
 HTTPS_REQ_TIMEOUT = 10
 
 NITTER_URLS = [
-    'https://nitter.42l.fr',
+    'https://nitter.lacontrevoie.fr',
     'https://nitter.pussthecat.org',
     'https://nitter.fdn.fr',
     'https://nitter.eu',
