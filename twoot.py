@@ -52,7 +52,7 @@ NITTER_URLS = [
     'https://nitter.eu',
     'https://nitter.namazso.eu',
     'https://n.l5.ca',
-    'https://nitter.nl',
+    'https://nitter.spaceint.fr',
 ]
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
