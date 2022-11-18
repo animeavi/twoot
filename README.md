@@ -1,7 +1,7 @@
 # Twoot
 
-Twoot is a python script that extracts tweets from a twitter feed and
-reposts them as toots on a Mastodon account.
+Twoot is a python script that mirrors tweets from a twitter account to a Mastodon account.
+It is simple to set-up on a local machine, configurable and feature-rich.
 
 **UPDATE XX NOV 2022** VERSION 2.4 Added command-line option (`-u`) to
 remove tracking parameters from URLs included in tweets. A tracking URL
@@ -29,7 +29,7 @@ of a communication campaign.
 
 ```
 twoot.py [-h] -t <twitter account> -i <mastodon instance> -m <mastodon account>
-                -p <mastodon password> [-r] [-s] [-v] [-a <max age in days)>]
+                -p <mastodon password> [-r] [-s] [-u] [-v] [-a <max age in days)>]
                 [-d <min delay (in mins)>] [-c <max # of toots to post>]
 ```
 
@@ -47,6 +47,7 @@ is @superduperbot@botsin.space
 | -v    | upload videos to Mastodon                        | *N/A*              | No  |
 | -r    | Post reply-to tweets (ignored by default)        | *N/A*              | No  |
 | -s    | Skip retweets (posted by default)                | *N/A*              | No  |
+| -u    | Remove trackers from URLs                        | *N/A*              | No  |
 | -a    | Max. age of tweet to post (in days)              | `5`                | No  |
 | -d    | Min. age before posting new tweet (in minutes)   | `15`               | No  |
 | -c    | Max number of toots allowed to post (cap)        | `1`                | No  |
@@ -106,5 +107,5 @@ Twoot is known to be used for the following feeds (older first):
 ## Background
 
 I started twoot when [tootbot](https://github.com/cquest/tootbot)
-stopped working. Tootbot relies on rss feeds from https://twitrss.me
+stopped working. Tootbot relied on RSS feeds from https://twitrss.me
 that broke when Twitter refreshed their web UI in July 2019.
