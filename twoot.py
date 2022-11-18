@@ -111,7 +111,8 @@ def clean_url(dirty_url):
         _remove_tracker_params(url_parsed.fragment)
     ])
 
-    logging.debug('Cleaned URL from: ' + dirty_url + ' to: ' + cleaned_url)
+    if cleaned_url != dirty_url:
+        logging.debug('Cleaned URL from: ' + dirty_url + ' to: ' + cleaned_url)
 
     return cleaned_url
 
