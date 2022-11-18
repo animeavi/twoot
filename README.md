@@ -3,9 +3,11 @@
 Twoot is a python script that extracts tweets from a twitter feed and
 reposts them as toots on a Mastodon account.
 
-**UPDATE 15 NOV 2022** VERSION 2.3 Added command-line option (`-s`) to
-skip retweets. With this option, retweets will be ignored and not posted
-on Mastodon.
+**UPDATE XX NOV 2022** VERSION 2.4 Added command-line option (`-u`) to
+remove tracking parameters from URLs included in tweets. A tracking URL
+is a normal URL with parameters attached to it. These parameters are used
+by marketing companies to identify the source of a click and the effectiveness
+of a communication campaign.
 
 > Previous updates can be found in CHANGELOG.
 
