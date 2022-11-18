@@ -96,8 +96,8 @@ def clean_url(dirty_url):
     Given a URL, return it with the UTM parameters removed from query and fragment
     :param dirty_url: url to be cleaned
     :return: url cleaned
-    >>> clean_url('https://exemple.com/video/this-aerial-ropeway?utm_source=Twitter&utm_medium=video&utm_campaign=organic&utm_content=Nov13&a=aaa&b=1#mkt_tok=tik&mkt_tik=tok')
-    'https://exemple.com/video/this-aerial-ropeway?a=aaa&b=1#mkt_tik=tok'
+    >>> clean_url('https://example.com/video/this-aerial-ropeway?utm_source=Twitter&utm_medium=video&utm_campaign=organic&utm_content=Nov13&a=aaa&b=1#mkt_tok=tik&mkt_tik=tok')
+    'https://example.com/video/this-aerial-ropeway?a=aaa&b=1#mkt_tik=tok'
     """
 
     url_parsed = urlparse(dirty_url)
@@ -114,11 +114,12 @@ def clean_url(dirty_url):
     return cleaned_url
 
 
-def process_media_body(tt_iter):
+def process_media_body(tt_iter, remove_trackers):
     """
     Receives an iterator over all the elements contained in the tweet-text container.
     Processes them to make them suitable for posting on Mastodon
     :param tt_iter: iterator over the HTML elements in the text of the tweet
+    :param remove_trackers: bool to indicate if trackers should be removed
     :return:        cleaned up text of the tweet
     """
     tweet_text = ''
@@ -139,7 +140,10 @@ def process_media_body(tt_iter):
                 tweet_text += tag_text
             else:
                 # This is a real link, keep url
-                tweet_text += clean_url(tag.get('href'))
+                if remove_trackers:
+                    tweet_text += clean_url(tag.get('href'))
+                else:
+                    tweet_text += tag.get('href')
         else:
             logging.warning("No handler for tag in twitter text: " + tag.prettify())
 
@@ -319,6 +323,7 @@ def main(argv):
     parser.add_argument('-p', metavar='<mastodon password>', action='store', required=True)
     parser.add_argument('-r', action='store_true', help='Also post replies to other tweets')
     parser.add_argument('-s', action='store_true', help='Suppress retweets')
+    parser.add_argument('-u', action='store_true', help='Remove trackers from URLs')
     parser.add_argument('-v', action='store_true', help='Ingest twitter videos and upload to Mastodon instance')
     parser.add_argument('-a', metavar='<max age (in days)>', action='store', type=float, default=1)
     parser.add_argument('-d', metavar='<min delay (in mins)>', action='store', type=float, default=0)
@@ -333,6 +338,7 @@ def main(argv):
     mast_password = args['p']
     tweets_and_replies = args['r']
     suppress_retweets = args['s']
+    remove_trackers = args['u']
     get_vids = args['v']
     max_age = float(args['a'])
     min_delay = float(args['d'])
@@ -358,6 +364,7 @@ def main(argv):
     logging.info('    -m ' + mast_account)
     logging.info('    -r ' + str(tweets_and_replies))
     logging.info('    -s ' + str(suppress_retweets))
+    logging.info('    -u ' + str(remove_trackers))
     logging.info('    -v ' + str(get_vids))
     logging.info('    -a ' + str(max_age))
     logging.info('    -d ' + str(min_delay))
