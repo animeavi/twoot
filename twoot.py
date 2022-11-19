@@ -67,7 +67,7 @@ USER_AGENTS = [
 ]
 
 
-def _remove_tracker_params(query_str):
+def _remove_trackers_query(query_str):
     """
     private function
     Given a query string from a URL, strip out the known trackers
@@ -91,6 +91,22 @@ def _remove_tracker_params(query_str):
     return urlencode(query_cleaned, doseq=True)
 
 
+def _remove_trackers_fragment(fragment_str):
+    """
+    private function
+    Given a fragment string from a URL, strip out the known trackers
+    :param query_str: fragment to be cleaned
+    :return: cleaned fragment
+    """
+ 
+    # Not implemented
+    # Unclear what, if anything, can be done
+    # Need better understanding of fragment-based tracking
+    # https://builtvisible.com/one-weird-trick-to-avoid-utm-parameters/
+
+    return fragment_str
+
+
 def clean_url(dirty_url):
     """
     Given a URL, return it with the UTM parameters removed from query and fragment
@@ -107,8 +123,8 @@ def clean_url(dirty_url):
         url_parsed.netloc,
         url_parsed.path,
         url_parsed.params,
-        _remove_tracker_params(url_parsed.query),
-        _remove_tracker_params(url_parsed.fragment)
+        _remove_trackers_query(url_parsed.query),
+        _remove_trackers_fragment(url_parsed.fragment)
     ])
 
     if cleaned_url != dirty_url:
