@@ -1,4 +1,4 @@
-**XX NOV 2022** VERSION 2.4 Added command-line option (`-u`) to
+**22 NOV 2022** VERSION 2.4 Added command-line option (`-u`) to
 remove tracking parameters from URLs included in tweets. A tracking URL
 is a normal URL with parameters attached to it. These parameters are used
 by marketing companies to identify the source of a click and the effectiveness
