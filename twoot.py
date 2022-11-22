@@ -66,6 +66,33 @@ USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Vivaldi/5.4.2753.51',
 ]
 
+def deredir_url(url):
+    """
+    Given a URL, return the URL that the page really downloads from
+    :param url: url to be de-redirected
+    :return: direct url
+    """
+
+    # Get a copy of the default headers that requests would use
+    headers = requests.utils.default_headers()
+
+    # Update default headers with randomly selected user agent
+    headers.update(
+        {
+            'User-Agent': USER_AGENTS[random.randint(0, len(USER_AGENTS) - 1)],
+        }
+    )
+
+    ret = None
+    try:
+        # Download the page
+        ret = requests.get(url, headers, timeout=5)
+    except:
+        # If anything goes wrong keep the URL intact
+        return url
+
+    # Return the URL that the page was downloaded from
+    return ret.url
 
 def _remove_trackers_query(query_str):
     """
@@ -158,11 +185,12 @@ def process_media_body(tt_iter, remove_trackers):
                 # Only keep hashtag text
                 tweet_text += tag_text
             else:
-                # This is a real link, keep url
+                # This is a real link
+                url = deredir_url(tag.get('href'))
                 if remove_trackers:
-                    tweet_text += clean_url(tag.get('href'))
+                    tweet_text += clean_url(url)
                 else:
-                    tweet_text += tag.get('href')
+                    tweet_text += url
         else:
             logging.warning("No handler for tag in twitter text: " + tag.prettify())
 
@@ -426,7 +454,7 @@ def main(argv):
     if tweets_and_replies:
         url += '/with_replies'
 
-    # Download twitter page of user.
+    # Download twitter page of user
     try:
         twit_account_page = session.get(url, headers=headers, timeout=HTTPS_REQ_TIMEOUT)
     except requests.exceptions.ConnectionError:
