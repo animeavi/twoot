@@ -110,13 +110,18 @@ def _remove_trackers_query(query_str):
     # tag by TikTok
     # tags by Snapchat
     # tags by Facebook
-    params_to_remove = [
-        "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+    params_to_remove = {
+        "gclid", "_ga", "gclsrc", "dclid",
+        "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_cid", "utm_reader", "utm_name", "utm_referrer", "utm_social", "utm_social-type",
         "mkt_tok",
         "campaign_name", "ad_set_name", "campaign_id", "ad_set_id",
-        "media", "interest_group_name",
-        "xtor"
-    ]
+        "fbclid", "campaign_name", "ad_set_name", "ad_set_id", "media", "interest_group_name", "ad_set_id"
+        "igshid",
+        "cvid", "oicd", "msclkid",
+        "soc_src", "soc_trk",
+        "_openstat", "yclid",
+        "xtor", "xtref", "adid",
+    }
     query_to_clean = dict(parse_qsl(query_str, keep_blank_values=True))
     query_cleaned = [(k, v) for k, v in query_to_clean.items() if not k in params_to_remove]
     return urlencode(query_cleaned, doseq=True)
@@ -129,12 +134,15 @@ def _remove_trackers_fragment(fragment_str):
     :param query_str: fragment to be cleaned
     :return: cleaned fragment
     """
- 
-    # Not implemented
-    # Unclear what, if anything, can be done
-    # Need better understanding of fragment-based tracking
-    # https://builtvisible.com/one-weird-trick-to-avoid-utm-parameters/
 
+    params_to_remove = {
+        "Echobox",
+    }
+    
+    if '=' in fragment_str:
+        fragment_str = fragment_str.split('&')
+        query_cleaned = [i for i in fragment_str if i.split('=')[0] not in params_to_remove]
+        fragment_str = '&'.join(query_cleaned)
     return fragment_str
 
 
