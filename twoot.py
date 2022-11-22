@@ -86,7 +86,7 @@ def deredir_url(url):
     ret = None
     try:
         # Download the page
-        ret = requests.get(url, timeout=5)
+        ret = requests.get(url, headers=headers, timeout=5)
     except:
         # If anything goes wrong keep the URL intact
         return url
@@ -96,6 +96,7 @@ def deredir_url(url):
 
     # Return the URL that the page was downloaded from
     return ret.url
+
 
 def _remove_trackers_query(query_str):
     """
