@@ -91,6 +91,9 @@ def deredir_url(url):
         # If anything goes wrong keep the URL intact
         return url
 
+    if ret.url != url:
+        logging.debug("Removed redirection from: " + url + " to: " + ret.url)
+
     # Return the URL that the page was downloaded from
     return ret.url
 
