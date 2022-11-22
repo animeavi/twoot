@@ -86,7 +86,7 @@ def deredir_url(url):
     ret = None
     try:
         # Download the page
-        ret = requests.get(url, headers, timeout=5)
+        ret = requests.get(url, timeout=5)
     except:
         # If anything goes wrong keep the URL intact
         return url
