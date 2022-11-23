@@ -59,6 +59,9 @@ resource is directly dowmnloaded from (if applicable). e.g. bit.ly/xxyyyzz -> ex
 Every link visit can take up to 5 sec (timeout) therefore this option will slow down
 tweet processing.
 
+If you are interested by tracker removal (`-u`) you should also select redirection removal(`-l`)
+as trackers are often hidden behind the redirection of a short URL.
+
 When using the `-v` switch consider:
 
 * whether the copyright of the content that you want to cross-post allows it
