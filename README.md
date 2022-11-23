@@ -1,13 +1,12 @@
 # Twoot
 
-Twoot is a python script that mirrors tweets from a twitter account to a Mastodon account.
-It is simple to set-up on a local machine, configurable and feature-rich.
+**Twoot is a python script that mirrors tweets from a twitter account to a Mastodon account.
+It is simple to set-up on a local machine, configurable and feature-rich.**
 
-**UPDATE 22 NOV 2022** VERSION 2.4 Added command-line option (`-u`) to
-remove tracking parameters from URLs included in tweets. A tracking URL is a
-normal URL with additional parameters attached to it. These parameters are used
-by marketing companies to identify the source of a click and the effectiveness
-of a communication campaign.
+**UPDATE 23 NOV 2022** VERSION 2.5 Added command-line option (`-l`) to remove redirection
+from links included in tweets. Obfuscated links are replaced by the URL that the resource
+is directly downloaded from. Also improved tracker removal by cleaning URL fragments as well
+(contrib: mathdatech, thanks!).
 
 > Previous updates can be found in CHANGELOG.
 
@@ -25,7 +24,7 @@ of a communication campaign.
 * Optionally ignore retweets
 * Allows rate-limiting posts to Mastodon instance
 
-## usage
+## Usage
 
 ```
 twoot.py [-h] -t <twitter account> -i <mastodon instance> -m <mastodon account>
@@ -33,7 +32,7 @@ twoot.py [-h] -t <twitter account> -i <mastodon instance> -m <mastodon account>
                 [-d <min delay (in mins)>] [-c <max # of toots to post>]
 ```
 
-## arguments
+## Arguments
 
 Assuming that the Twitter handle is @SuperDuperBot and the Mastodon account
 is @superduperbot@botsin.space
@@ -42,15 +41,26 @@ is @superduperbot@botsin.space
 |-------|--------------------------------------------------|--------------------|-----|
 | -t    | twitter account name without '@'                 | `SuperDuper`       | Yes |
 | -i    | Mastodon instance domain name                    | `botsin.space`     | Yes |
-| -m    | Mastodon username                                | `superduperbot`    | Yes |
+| -m    | Mastodon username                                | `sd@example.com`   | Yes |
 | -p    | Mastodon password                                | `my_Sup3r-S4f3*pw` | Yes |
 | -v    | upload videos to Mastodon                        | *N/A*              | No  |
 | -r    | Post reply-to tweets (ignored by default)        | *N/A*              | No  |
 | -s    | Skip retweets (posted by default)                | *N/A*              | No  |
+| -l    | Remove link redirection                          | *N/A*              | No  |
 | -u    | Remove trackers from URLs                        | *N/A*              | No  |
 | -a    | Max. age of tweet to post (in days)              | `5`                | No  |
 | -d    | Min. age before posting new tweet (in minutes)   | `15`               | No  |
 | -c    | Max number of toots allowed to post (cap)        | `1`                | No  |
+
+## Notes
+
+`-l` will follow every link included in the tweet and replace them with the url that the
+resource is directly dowmnloaded from (if applicable). e.g. bit.ly/xxyyyzz -> example.com
+Every link visit can take up to 5 sec (timeout) therefore this option will slow down
+tweet processing.
+
+If you are interested by tracker removal (`-u`) you should also select redirection removal(`-l`)
+as trackers are often hidden behind the redirection of a short URL.
 
 When using the `-v` switch consider:
 
@@ -64,7 +74,7 @@ Default min delay is 0 minutes.
 
 No limitation is applied to the number of toots uploaded if `-c` is not specified.
 
-## installation
+## Installation
 
 Make sure python3 is installed.
 

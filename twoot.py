@@ -40,7 +40,7 @@ MAX_REC_COUNT = 50
 
 # Set the desired verbosity of logging
 # One of logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL
-LOGGING_LEVEL = logging.WARNING
+LOGGING_LEVEL = logging.INFO
 
 # How many seconds to wait before giving up on a download (except video download)
 HTTPS_REQ_TIMEOUT = 10
@@ -67,6 +67,38 @@ USER_AGENTS = [
 ]
 
 
+def deredir_url(url):
+    """
+    Given a URL, return the URL that the page really downloads from
+    :param url: url to be de-redirected
+    :return: direct url
+    """
+
+    # Get a copy of the default headers that requests would use
+    headers = requests.utils.default_headers()
+
+    # Update default headers with randomly selected user agent
+    headers.update(
+        {
+            'User-Agent': USER_AGENTS[random.randint(0, len(USER_AGENTS) - 1)],
+        }
+    )
+
+    ret = None
+    try:
+        # Download the page
+        ret = requests.get(url, headers=headers, timeout=5)
+    except:
+        # If anything goes wrong keep the URL intact
+        return url
+
+    if ret.url != url:
+        logging.debug("Removed redirection from: " + url + " to: " + ret.url)
+
+    # Return the URL that the page was downloaded from
+    return ret.url
+
+
 def _remove_trackers_query(query_str):
     """
     private function
@@ -79,15 +111,20 @@ def _remove_trackers_query(query_str):
     # tag by TikTok
     # tags by Snapchat
     # tags by Facebook
-    params_to_remove = [
-        "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+    params_to_remove = {
+        "gclid", "_ga", "gclsrc", "dclid",
+        "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_cid", "utm_reader", "utm_name", "utm_referrer", "utm_social", "utm_social-type",
         "mkt_tok",
         "campaign_name", "ad_set_name", "campaign_id", "ad_set_id",
-        "media", "interest_group_name",
-        "xtor"
-    ]
+        "fbclid", "campaign_name", "ad_set_name", "ad_set_id", "media", "interest_group_name", "ad_set_id"
+        "igshid",
+        "cvid", "oicd", "msclkid",
+        "soc_src", "soc_trk",
+        "_openstat", "yclid",
+        "xtor", "xtref", "adid",
+    }
     query_to_clean = dict(parse_qsl(query_str, keep_blank_values=True))
-    query_cleaned = [(k, v) for k, v in query_to_clean.items() if not k in params_to_remove]
+    query_cleaned = [(k, v) for k, v in query_to_clean.items() if k not in params_to_remove]
     return urlencode(query_cleaned, doseq=True)
 
 
@@ -98,12 +135,15 @@ def _remove_trackers_fragment(fragment_str):
     :param query_str: fragment to be cleaned
     :return: cleaned fragment
     """
- 
-    # Not implemented
-    # Unclear what, if anything, can be done
-    # Need better understanding of fragment-based tracking
-    # https://builtvisible.com/one-weird-trick-to-avoid-utm-parameters/
 
+    params_to_remove = {
+        "Echobox",
+    }
+
+    if '=' in fragment_str:
+        fragment_str = fragment_str.split('&')
+        query_cleaned = [i for i in fragment_str if i.split('=')[0] not in params_to_remove]
+        fragment_str = '&'.join(query_cleaned)
     return fragment_str
 
 
@@ -133,11 +173,12 @@ def clean_url(dirty_url):
     return cleaned_url
 
 
-def process_media_body(tt_iter, remove_trackers):
+def process_media_body(tt_iter, remove_redir, remove_trackers):
     """
     Receives an iterator over all the elements contained in the tweet-text container.
     Processes them to make them suitable for posting on Mastodon
     :param tt_iter: iterator over the HTML elements in the text of the tweet
+    :param remove_redir: bool to indicate if redirections should be removed
     :param remove_trackers: bool to indicate if trackers should be removed
     :return:        cleaned up text of the tweet
     """
@@ -158,11 +199,16 @@ def process_media_body(tt_iter, remove_trackers):
                 # Only keep hashtag text
                 tweet_text += tag_text
             else:
-                # This is a real link, keep url
-                if remove_trackers:
-                    tweet_text += clean_url(tag.get('href'))
+                # This is a real link
+                if remove_redir:
+                    url = deredir_url(tag.get('href'))
                 else:
-                    tweet_text += tag.get('href')
+                    url = tag.get('href')
+
+                if remove_trackers:
+                    tweet_text += clean_url(url)
+                else:
+                    tweet_text += url
         else:
             logging.warning("No handler for tag in twitter text: " + tag.prettify())
 
@@ -342,6 +388,7 @@ def main(argv):
     parser.add_argument('-p', metavar='<mastodon password>', action='store', required=True)
     parser.add_argument('-r', action='store_true', help='Also post replies to other tweets')
     parser.add_argument('-s', action='store_true', help='Suppress retweets')
+    parser.add_argument('-l', action='store_true', help='Remove link redirection')
     parser.add_argument('-u', action='store_true', help='Remove trackers from URLs')
     parser.add_argument('-v', action='store_true', help='Ingest twitter videos and upload to Mastodon instance')
     parser.add_argument('-a', metavar='<max age (in days)>', action='store', type=float, default=1)
@@ -357,6 +404,7 @@ def main(argv):
     mast_password = args['p']
     tweets_and_replies = args['r']
     suppress_retweets = args['s']
+    remove_redir = args['l']
     remove_trackers = args['u']
     get_vids = args['v']
     max_age = float(args['a'])
@@ -383,6 +431,7 @@ def main(argv):
     logging.info('    -m ' + mast_account)
     logging.info('    -r ' + str(tweets_and_replies))
     logging.info('    -s ' + str(suppress_retweets))
+    logging.info('    -l ' + str(remove_redir))
     logging.info('    -u ' + str(remove_trackers))
     logging.info('    -v ' + str(get_vids))
     logging.info('    -a ' + str(max_age))
@@ -426,7 +475,7 @@ def main(argv):
     if tweets_and_replies:
         url += '/with_replies'
 
-    # Download twitter page of user.
+    # Download twitter page of user
     try:
         twit_account_page = session.get(url, headers=headers, timeout=HTTPS_REQ_TIMEOUT)
     except requests.exceptions.ConnectionError:
@@ -539,7 +588,7 @@ def main(argv):
         tt_iter = status.find('div', class_='tweet-content media-body').children
 
         # Process text of tweet
-        tweet_text += process_media_body(tt_iter, remove_trackers)
+        tweet_text += process_media_body(tt_iter, remove_redir, remove_trackers)
 
         # Process quote: append link to tweet_text
         quote_div = status.find('a', class_='quote-link')
