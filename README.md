@@ -1,11 +1,12 @@
 # Twoot
 
-Twoot is a python script that mirrors tweets from a twitter account to a Mastodon account.
-It is simple to set-up on a local machine, configurable and feature-rich.
+**Twoot is a python script that mirrors tweets from a twitter account to a Mastodon account.
+It is simple to set-up on a local machine, configurable and feature-rich.**
 
-**UPDATE XX NOV 2022** VERSION 2.5 Added command-line option (`-l`) to remove redirection
+**UPDATE 23 NOV 2022** VERSION 2.5 Added command-line option (`-l`) to remove redirection
 from links included in tweets. Obfuscated links are replaced by the URL that the resource
-is directly downloaded from.
+is directly downloaded from. Also improved tracker removal by cleaning URL fragments as well
+(contrib: mathdatech, thanks!).
 
 > Previous updates can be found in CHANGELOG.
 

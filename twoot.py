@@ -40,7 +40,7 @@ MAX_REC_COUNT = 50
 
 # Set the desired verbosity of logging
 # One of logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL
-LOGGING_LEVEL = logging.DEBUG
+LOGGING_LEVEL = logging.INFO
 
 # How many seconds to wait before giving up on a download (except video download)
 HTTPS_REQ_TIMEOUT = 10
