@@ -66,6 +66,7 @@ USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Vivaldi/5.4.2753.51',
 ]
 
+
 def deredir_url(url):
     """
     Given a URL, return the URL that the page really downloads from
@@ -123,7 +124,7 @@ def _remove_trackers_query(query_str):
         "xtor", "xtref", "adid",
     }
     query_to_clean = dict(parse_qsl(query_str, keep_blank_values=True))
-    query_cleaned = [(k, v) for k, v in query_to_clean.items() if not k in params_to_remove]
+    query_cleaned = [(k, v) for k, v in query_to_clean.items() if k not in params_to_remove]
     return urlencode(query_cleaned, doseq=True)
 
 
@@ -138,7 +139,7 @@ def _remove_trackers_fragment(fragment_str):
     params_to_remove = {
         "Echobox",
     }
-    
+
     if '=' in fragment_str:
         fragment_str = fragment_str.split('&')
         query_cleaned = [i for i in fragment_str if i.split('=')[0] not in params_to_remove]
@@ -172,7 +173,7 @@ def clean_url(dirty_url):
     return cleaned_url
 
 
-def process_media_body(tt_iter, remove_trackers):
+def process_media_body(tt_iter, remove_redir, remove_trackers):
     """
     Receives an iterator over all the elements contained in the tweet-text container.
     Processes them to make them suitable for posting on Mastodon
@@ -198,7 +199,11 @@ def process_media_body(tt_iter, remove_trackers):
                 tweet_text += tag_text
             else:
                 # This is a real link
-                url = deredir_url(tag.get('href'))
+                if remove_redir:
+                    url = deredir_url(tag.get('href'))
+                else:
+                    url = tag.get('href')
+
                 if remove_trackers:
                     tweet_text += clean_url(url)
                 else:
@@ -382,6 +387,7 @@ def main(argv):
     parser.add_argument('-p', metavar='<mastodon password>', action='store', required=True)
     parser.add_argument('-r', action='store_true', help='Also post replies to other tweets')
     parser.add_argument('-s', action='store_true', help='Suppress retweets')
+    parser.add_argument('-l', action='store_true', help='Remove link redirection')
     parser.add_argument('-u', action='store_true', help='Remove trackers from URLs')
     parser.add_argument('-v', action='store_true', help='Ingest twitter videos and upload to Mastodon instance')
     parser.add_argument('-a', metavar='<max age (in days)>', action='store', type=float, default=1)
@@ -397,6 +403,7 @@ def main(argv):
     mast_password = args['p']
     tweets_and_replies = args['r']
     suppress_retweets = args['s']
+    remove_redir = args['l']
     remove_trackers = args['u']
     get_vids = args['v']
     max_age = float(args['a'])
@@ -423,6 +430,7 @@ def main(argv):
     logging.info('    -m ' + mast_account)
     logging.info('    -r ' + str(tweets_and_replies))
     logging.info('    -s ' + str(suppress_retweets))
+    logging.info('    -l ' + str(remove_redir))
     logging.info('    -u ' + str(remove_trackers))
     logging.info('    -v ' + str(get_vids))
     logging.info('    -a ' + str(max_age))
@@ -579,7 +587,7 @@ def main(argv):
         tt_iter = status.find('div', class_='tweet-content media-body').children
 
         # Process text of tweet
-        tweet_text += process_media_body(tt_iter, remove_trackers)
+        tweet_text += process_media_body(tt_iter, remove_redir, remove_trackers)
 
         # Process quote: append link to tweet_text
         quote_div = status.find('a', class_='quote-link')
