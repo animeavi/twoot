@@ -178,6 +178,7 @@ def process_media_body(tt_iter, remove_redir, remove_trackers):
     Receives an iterator over all the elements contained in the tweet-text container.
     Processes them to make them suitable for posting on Mastodon
     :param tt_iter: iterator over the HTML elements in the text of the tweet
+    :param remove_redir: bool to indicate if redirections should be removed
     :param remove_trackers: bool to indicate if trackers should be removed
     :return:        cleaned up text of the tweet
     """
