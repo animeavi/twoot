@@ -735,10 +735,10 @@ def main(argv):
     soup = BeautifulSoup(twit_account_page.text, 'html.parser')
 
     # Replace twitter_account with version with correct capitalization
-    ta = soup.find('meta', property='og:title').get('content')
-    ta_match = re.search(r'\(@(.+)\)', ta)
-    if ta_match is not None:
-        TOML['config']['twitter_account'] = ta_match.group(1)
+    # ta = soup.find('meta', property='og:title').get('content')
+    # ta_match = re.search(r'\(@(.+)\)', ta)
+    # if ta_match is not None:
+    #     TOML['config']['twitter_account'] = ta_match.group(1)
 
     # Extract twitter timeline
     timeline = soup.find_all('div', class_='timeline-item')
