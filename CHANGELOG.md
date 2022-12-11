@@ -1,3 +1,5 @@
+# Changelog
+
 **23 NOV 2022** VERSION 2.5 Added command-line option (`-l`) to remove
 redirection from links included in tweets. Obfuscated links are replaced
 by the URL that the resource is directly downloaded from. Also improved

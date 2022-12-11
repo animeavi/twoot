@@ -7,4 +7,5 @@ venv/
 *.png
 *.xcf
 twoot.db
-__pycache__
+*.toml
+!default.toml
