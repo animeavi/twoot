@@ -1,0 +1,79 @@
+[config]
+# twitter account name without '@'
+twitter_account = ""
+
+# Domain name of Mastodon instance
+mastodon_instance = ""
+
+# Mastodon username (login email address)
+mastodon_user = ""
+
+[options]
+# Download videos from twitter and upload them on Mastodon
+# Default is false
+upload_videos = false
+
+# Also post the "reply-to" tweets from twitter account
+# Default is false
+post_reply_to = false
+
+# Do not post the retweets of other twitter accounts
+# Default is false
+skip_retweets = false
+
+# Replace redirected links in tweets with direct URLs
+# Default is false
+remove_link_redirections = false
+
+# Clean up URLs in tweets to remove trackers
+# Default is false
+remove_trackers_from_urls = false
+
+# Footer line added at bottom of toots
+# e.g. "#twitter #bot"
+# Default is ""
+footer = ""
+
+# Do not add reference to "Original tweet" on toots
+# default is false
+remove_original_tweet_ref = false
+
+# Maximum age of tweet to post (in days, decimal values accepted)
+# Default is 1
+tweet_max_age = 1
+
+# Minimum age of tweet to post (in minutes)
+# Default is 0 (post tweet as soon as possible)
+tweet_delay = 0
+
+# Maximum number of toots to post in each run
+# Default is 0 (which means unlimited)
+toot_cap = 0
+
+# Replace twitter links by random alternative out of this list
+# List of nitter instances
+# e.g. subst_twitter = ["nitter.net", ]
+# Default is []
+subst_twitter = []
+
+# Replace youtube.com link by random alternative out of this list
+# List of Invidious or Piped instances
+# e.g. subst_youtube = ["piped.kavin.rocks", "invidious.flokinet.to", ]
+# Default is []
+subst_youtube = []
+
+# Replace reddit.com link by random alternative out of this list
+# List of Teddit instances
+# e.g. subst_reddit = ["teddit.net", ]
+# Default is []
+subst_reddit = []
+
+# Verbosity of log messages
+ # One of DEBUG, INFO, WARNING, ERROR, CRITICAL, OFF
+# Default is "WARNING"
+log_level = "WARNING"
+
+# How many days to keep log messages for
+# Log messages older than log_days will be deleted
+# Default is 3
+log_days = 3
