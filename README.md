@@ -31,6 +31,11 @@ It is simple to set-up on a local machine, configurable and feature-rich.
 * Optionally post reply-to tweets on the mastodon account
 * Optionally ignore retweets
 * Allows rate-limiting posts to Mastodon instance
+* Removal of redirections (e.g. reveal destination of short URLs)
+* Removal of trackers from URLs
+* Domain substitution for Twitter, Youtube and Reddit domains (e.g. [Nitter](https://github.com/zedeus/nitter/wiki/Instances),
+  [Invidious](https://redirect.invidious.io/) and [teddit](https://teddit.net/) respectively)
+* Optional footer line to add tags at bottom of toot
 
 ## Usage
 
