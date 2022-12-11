@@ -563,14 +563,19 @@ def terminate(exit_code):
 
     # Check each line
     pos = log_file.tell()
-    while log_file:
+    while True:
         line = log_file.readline()
+        # Check if we reached the end of the file
+        if not line:
+            exit(exit_code)
+
         try:
             # Extract date on log line
             date = datetime.strptime(line[:10], '%Y-%m-%d')
         except ValueError:
             # date was not found on this line, try next one
             continue
+
         # Time difference between log message and now
         log_delta = datetime.now() - date
         # Only keep the number of days of the difference
