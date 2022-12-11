@@ -553,8 +553,8 @@ def terminate(exit_code):
     max_delta = timedelta(TOML['options']['log_days'])
 
     # Open log file
-    log_file_name = TOML['config']['twitter_account'] + '.log'
-    new_log_file_name = TOML['config']['twitter_account'] + '.log.new'
+    log_file_name = TOML['config']['twitter_account'].lower() + '.log'
+    new_log_file_name = TOML['config']['twitter_account'].lower() + '.log.new'
     try:
         log_file = open(log_file_name, 'r')
     except FileNotFoundError:
@@ -624,7 +624,7 @@ def main(argv):
 
     # Setup logging to file
     logging.basicConfig(
-        filename=TOML['config']['twitter_account'] + '.log',
+        filename=TOML['config']['twitter_account'].lower() + '.log',
         format='%(asctime)s %(levelname)-8s %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
     )
@@ -734,7 +734,7 @@ def main(argv):
     # Make soup
     soup = BeautifulSoup(twit_account_page.text, 'html.parser')
 
-    # Replace twit_account with version with correct capitalization
+    # Replace twitter_account with version with correct capitalization
     ta = soup.find('meta', property='og:title').get('content')
     ta_match = re.search(r'\(@(.+)\)', ta)
     if ta_match is not None:
