@@ -634,24 +634,29 @@ def main(argv):
         datefmt='%Y-%m-%d %H:%M:%S',
     )
 
-    # Set level of logging
+    # Set default level of logging
     log_level = logging.WARNING
-    match TOML['options']['log_level'].upper():
-        case 'DEBUG':
-            log_level = logging.DEBUG
-        case 'INFO':
-            log_level = logging.INFO
-        case 'WARNING':
-            log_level = logging.WARNING
-        case 'ERROR':
-            log_level = logging.ERROR
-        case 'CRITICAL':
-            log_level = logging.CRITICAL
-        case 'OFF':
-            # Disable all logging
-            logging.disable(logging.CRITICAL)
-        case _:
-            logging.error('Invalid log_level %s in config file. Using WARNING.', str(TOML['options']['log_level']))
+
+    # log level as an uppercase string from config
+    ll_str = TOML['options']['log_level'].upper()
+
+    if ll_str == "DEBUG":
+        log_level = logging.DEBUG
+    elif ll_str == "INFO":
+        log_level = logging.INFO
+    elif ll_str == "WARNING":
+        log_level = logging.WARNING
+    elif ll_str == "ERROR":
+        log_level = logging.ERROR
+    elif ll_str == "CRITICAL":
+        log_level == logging.CRITICAL
+    elif ll_str == "OFF":
+        # Disable all logging
+        logging.disable(logging.CRITICAL)
+    else:
+        logging.error('Invalid log_level %s in config file. Using WARNING.', str(TOML['options']['log_level']))
+
+    # Set desired level of logging
     logger = logging.getLogger()
     logger.setLevel(log_level)
 

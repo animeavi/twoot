@@ -1,5 +1,26 @@
 # Changelog
 
+**11 DEC 2022**
+
+VERSION 3.1 HOTFIX
+
+* Added missing `default.toml` file
+* Corrected a bug that could cause an infinity loop when log file is empty
+
+VERSION 3.0 brings some important changes and new features:
+
+* Only potentially breaking change: **If you are using a version of python < 3.11 you need to install the `tomli` module**
+* Twoot can be configured with a config file in [TOML](https://toml.io/) format. Check `default.toml` for details
+* Domain susbtitution can be configured in the config file to replace links to Twitter, Youtube and
+  Reddit domains with alternatives (e.g. [Nitter](https://github.com/zedeus/nitter/wiki/Instances),
+  [Invidious](https://redirect.invidious.io/) and [teddit](https://teddit.net/) respectively)
+* A footer line can be specified in the config file that gets added to all toots (with e.g. tags)
+* Added option to not add reference to "Original tweet" at the bottom of toots
+* A password must be provided with `-p` on the command-line for the first run only. After that it is no longer required.
+* The verbosity of logging messages can be set in the config file with `log_level=`.
+* Config file option `log_days =` specifies how long to keep log messages in file. Older messages are deleted.
+
+
 **23 NOV 2022** VERSION 2.5 Added command-line option (`-l`) to remove
 redirection from links included in tweets. Obfuscated links are replaced
 by the URL that the resource is directly downloaded from. Also improved
