@@ -981,9 +981,9 @@ def main(argv):
             )
 
             if len(media_ids) == 0:
-                toot = mastodon.status_post(tweet['tweet_text'], visibility='public')
+                toot = mastodon.status_post(tweet['tweet_text'])
             else:
-                toot = mastodon.status_post(tweet['tweet_text'], media_ids=media_ids, visibility='public')
+                toot = mastodon.status_post(tweet['tweet_text'], media_ids=media_ids)
 
         except MastodonError as me:
             logging.error('posting ' + tweet['tweet_text'] + ' to ' + TOML['config']['mastodon_instance'] + ' Failed')
