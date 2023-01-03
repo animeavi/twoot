@@ -30,7 +30,7 @@ import sqlite3
 import sys
 import time
 from pathlib import Path
-from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
+from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse, urljoin
 
 import requests
 from bs4 import BeautifulSoup, element
@@ -424,7 +424,8 @@ def process_attachments(nitter_url, attachments_container, status_id, author_acc
         if TOML['options']['upload_videos']:
             import youtube_dl
 
-            video_file = os.path.join('https://twitter.com', author_account, 'status', status_id)
+            video_path = f"{author_account}/status/{status_id}"
+            video_file = urljoin('https://twitter.com', video_path)
             ydl_opts = {
                 'outtmpl': "output/" + TOML['config']['twitter_account'] + "/" + status_id + "/%(id)s.%(ext)s",
                 'format': "best[width<=500]",
