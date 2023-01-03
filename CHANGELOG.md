@@ -1,13 +1,14 @@
 # Changelog
 
-**11 DEC 2022**
+**21 DEC 2022** VERSION 3.1.1
+Modified code that made twoot incompatible with python versions < 3.10
 
-VERSION 3.1 HOTFIX
+**11 DEC 2022** VERSION 3.1 HOTFIX
 
 * Added missing `default.toml` file
 * Corrected a bug that could cause an infinity loop when log file is empty
 
-VERSION 3.0 brings some important changes and new features:
+**11 DEC 2022** VERSION 3.0 brings some important changes and new features:
 
 * Only potentially breaking change: **If you are using a version of python < 3.11 you need to install the `tomli` module**
 * Twoot can be configured with a config file in [TOML](https://toml.io/) format. Check `default.toml` for details
@@ -19,7 +20,6 @@ VERSION 3.0 brings some important changes and new features:
 * A password must be provided with `-p` on the command-line for the first run only. After that it is no longer required.
 * The verbosity of logging messages can be set in the config file with `log_level=`.
 * Config file option `log_days =` specifies how long to keep log messages in file. Older messages are deleted.
-
 
 **23 NOV 2022** VERSION 2.5 Added command-line option (`-l`) to remove
 redirection from links included in tweets. Obfuscated links are replaced
