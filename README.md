@@ -3,7 +3,7 @@
 Twoot is a python script that mirrors tweets from a twitter account to a Mastodon account.
 It is simple to set-up on a local machine, configurable and feature-rich.
 
-**UPDATE XX JAN 2023** VERSION 3.1.2
+**UPDATE 04 JAN 2023** VERSION 3.1.2
 
 * *Posting Privacy* setting of the Mastodon account now defines visibility of toots posted with Twoot
 * Modified URL building for compatibility with Windows
