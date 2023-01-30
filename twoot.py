@@ -301,8 +301,11 @@ def clean_url(orig_url):
     if TOML['options']['remove_trackers_from_urls'] is False:
         return orig_url
 
+    # Parse a URL into 6 components:
+    # <scheme>://<netloc>/<path>;<params>?<query>#<fragment>
     url_parsed = urlparse(orig_url)
 
+    # Reassemble URL after removal of trackers
     dest_url = urlunparse([
         url_parsed.scheme,
         url_parsed.netloc,
@@ -582,6 +585,7 @@ def terminate(exit_code):
         # Only keep the number of days of the difference
         log_delta = timedelta(days=log_delta.days)
         if log_delta < max_delta:
+            logging.debug("Truncating log file")
             # Reset file pointer to position before reading last line
             log_file.seek(pos)
             remainder = log_file.read()
