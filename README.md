@@ -125,20 +125,23 @@ ago:
 1-59/15 * * * * /path/to/twoot.py -t SuperDuper -i masto.space -m sd@example.com -p my_Sup3r-S4f3*pw -a 5 -d 15
 ```
 
-## Examples
+## Featured Accounts
 
 Twoot is known to be used for the following feeds (older first):
 
-* [@todayilearned@botsin.space](https://noc.social/@todayilearned)
+* [@todayilearned@noc.social](https://noc.social/@todayilearned)
 * [@moznews@noc.social](https://noc.social/@moznews)
 * [@hackster_io@noc.social](https://noc.social/@hackster_io)
 * [@cnxsoft@noc.social](https://noc.social/@cnxsoft)
 * [@unrealengine@noc.social](https://noc.social/@unrealengine)
 * [@phoronix@noc.social](https://noc.social/@phoronix)
 * [@uanews@fed.celp.de](https://fed.celp.de/@uanews)
+* [@theregister@geeknews.chat](https://geeknews.chat/@theregister)
+* [@arstechnica@geeknews.chat](https://geeknews.chat/@arstechnica)
+* [@slashdot@geeknews.chat](https://geeknews.chat/@slashdot)
 
 ## Background
 
-I started twoot when [tootbot](https://github.com/cquest/tootbot)stopped working.
-Tootbot relied on RSS feeds from [https://twitrss.me](https://twitrss.me)that broke when Twitter
+I started twoot when [tootbot](https://github.com/cquest/tootbot) stopped working.
+Tootbot relied on RSS feeds from [https://twitrss.me](https://twitrss.me) that broke when Twitter
 refreshed their web UI in July 2019.
