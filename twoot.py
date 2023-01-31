@@ -213,7 +213,8 @@ def _remove_trackers_query(query_str):
     # tags by Facebook
     params_to_remove = {
         "gclid", "_ga", "gclsrc", "dclid",
-        "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_cid", "utm_reader", "utm_name", "utm_referrer", "utm_social", "utm_social-type",
+        "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_cid",
+        "utm_reader", "utm_name", "utm_referrer", "utm_social", "utm_social-type", "utm_brand"
         "mkt_tok",
         "campaign_name", "ad_set_name", "campaign_id", "ad_set_id",
         "fbclid", "campaign_name", "ad_set_name", "ad_set_id", "media", "interest_group_name", "ad_set_id"
