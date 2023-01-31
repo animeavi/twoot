@@ -50,19 +50,19 @@ tweet_delay = 0
 # Default is 0 (which means unlimited)
 toot_cap = 0
 
-# Replace twitter links by random alternative out of this list
+# Replace twitter.com in links by random alternative out of this list
 # List of nitter instances
 # e.g. subst_twitter = ["nitter.net", ]
 # Default is []
 subst_twitter = []
 
-# Replace youtube.com link by random alternative out of this list
+# Replace youtube.com in links by random alternative out of this list
 # List of Invidious or Piped instances
 # e.g. subst_youtube = ["piped.kavin.rocks", "invidious.flokinet.to", ]
 # Default is []
 subst_youtube = []
 
-# Replace reddit.com link by random alternative out of this list
+# Replace reddit.com in links by random alternative out of this list
 # List of Teddit instances
 # e.g. subst_reddit = ["teddit.net", ]
 # Default is []
