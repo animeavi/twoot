@@ -1,5 +1,10 @@
 # Changelog
 
+**04 JAN 2023** VERSION 3.1.2
+
+* *Posting Privacy* setting of the Mastodon account now defines visibility of toots posted with Twoot
+* Modified URL building for compatibility with Windows
+
 **21 DEC 2022** VERSION 3.1.1
 Modified code that made twoot incompatible with python versions < 3.10
 
