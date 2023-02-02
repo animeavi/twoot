@@ -952,6 +952,9 @@ def main(argv):
                 logging.debug("Uploading video to Mastodon")
                 media_posted = mastodon.media_post(tweet['video'])
                 media_ids.append(media_posted['id'])
+                # Possible mitigation for 
+                # ERROR ('Mastodon API returned error', 422, 'Unprocessable Entity', 'Cannot attach files that have not finished processing. Try again in a moment!')
+                time.sleep(5)
             except (MastodonAPIError, MastodonIllegalArgumentError,
                     TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
                 logging.debug("Uploading video failed")
