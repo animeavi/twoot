@@ -981,10 +981,10 @@ def main(argv):
         # Post toot
         toot = {}
         try:
-            mastodon = Mastodon(
-                access_token=TOML['config']['mastodon_user'] + '.secret',
-                api_base_url='https://' + TOML['config']['mastodon_instance']
-            )
+            # mastodon = Mastodon(
+            #     access_token=TOML['config']['mastodon_user'] + '.secret',
+            #     api_base_url='https://' + TOML['config']['mastodon_instance']
+            # )
 
             if len(media_ids) == 0:
                 toot = mastodon.status_post(tweet['tweet_text'])
