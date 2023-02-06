@@ -981,11 +981,6 @@ def main(argv):
         # Post toot
         toot = {}
         try:
-            # mastodon = Mastodon(
-            #     access_token=TOML['config']['mastodon_user'] + '.secret',
-            #     api_base_url='https://' + TOML['config']['mastodon_instance']
-            # )
-
             if len(media_ids) == 0:
                 toot = mastodon.status_post(tweet['tweet_text'])
             else:
@@ -995,7 +990,7 @@ def main(argv):
             # Assuming this is an: 
             # ERROR ('Mastodon API returned error', 422, 'Unprocessable Entity', 'Cannot attach files that have not finished processing. Try again in a moment!')
             logging.warning('Mastodon API Error 422: Cannot attach files that have not finished processing. Waiting 15 seconds and retrying.')
-            # Wait 10 seconds
+            # Wait 15 seconds
             time.sleep(15)
             # retry posting
             try:
