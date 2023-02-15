@@ -1,11 +1,17 @@
 # Changelog
 
+**01 FEB 2023** VERSION 3.1.3
+
+* Fixed *remove link redirections* option that would not work in some cases
+* Added `utm_brand` to list of blacklisted query parameters removed by *remove trackers from URLs* option
+
 **04 JAN 2023** VERSION 3.1.2
 
 * *Posting Privacy* setting of the Mastodon account now defines visibility of toots posted with Twoot
 * Modified URL building for compatibility with Windows
 
 **21 DEC 2022** VERSION 3.1.1
+
 Modified code that made twoot incompatible with python versions < 3.10
 
 **11 DEC 2022** VERSION 3.1 HOTFIX
@@ -27,7 +33,6 @@ Modified code that made twoot incompatible with python versions < 3.10
 * Config file option `log_days =` specifies how long to keep log messages in file. Older messages are deleted.
 
 **23 NOV 2022** VERSION 2.5 Added command-line option (`-l`) to remove
-redirection from links included in tweets. Obfuscated links are replaced
 by the URL that the resource is directly downloaded from. Also improved
 tracker removal by cleaning URL fragments as well (contrib: mathdatech,
 thanks!).
