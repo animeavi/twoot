@@ -48,11 +48,11 @@ NITTER_URLS = [
     'https://nitter.namazso.eu',
     'https://twitter.beparanoid.de',
     'https://n.l5.ca',
-    'https://nitter.privacydev.net', # USA, added 06/02/2023
     'https://nitter.fly.dev', # anycast, added 06/02/2023
     'https://notabird.site', # anycast, added 06/02/2023
 #    'https://nitter.fdn.fr', # not updated, rate limited, removed 06/02/2023
 #    'https://nitter.hu',
+#    'https://nitter.privacydev.net', # USA, added 06/02/2023, removed 15/02/2023 too slow
 ]
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
