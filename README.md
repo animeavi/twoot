@@ -3,9 +3,7 @@
 Twoot is a python script that mirrors tweets from a twitter account to a Mastodon account.
 It is simple to set-up on a local machine, configurable and feature-rich.
 
-**15/02/2023** VERSION 3.2 Added mitigation for Mastodon API error 422, 'Unprocessable Entity',
-'Cannot attach files that have not finished processing. Try again in a moment!' reported
-on some instances when posting toots with video.
+**21 FEB 2023** VERSION 3.2.1 Updated user agents and list of nitter instances
 
 > Previous updates can be found in CHANGELOG.
 
