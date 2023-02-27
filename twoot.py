@@ -45,11 +45,12 @@ HTTPS_REQ_TIMEOUT = 10
 NITTER_URLS = [
     'https://nitter.lacontrevoie.fr', # rate limited
     'https://nitter.namazso.eu',
-    'https://twitter.beparanoid.de',
+    'https://twitter.femboy.hu/',  # Replace beparanoid
     'https://n.l5.ca',
     'https://nitter.cutelab.space', # USA, added 16/02/2023
     'https://nitter.fly.dev', # anycast, added 06/02/2023
     'https://notabird.site', # anycast, added 06/02/2023
+#    'https://twitter.beparanoid.de',  # moved 27/022023
 #    'https://nitter.fdn.fr', # not updated, rate limited, removed 06/02/2023
 #    'https://nitter.hu',
 #    'https://nitter.privacydev.net', # USA, added 06/02/2023, removed 15/02/2023 too slow
@@ -109,7 +110,7 @@ def build_config(args):
         except ModuleNotFoundError:
             # for python < 3.11, tomli module must be installed
             import tomli as tomllib
-        
+
         loaded_toml = None
         # Load toml file
         try:
@@ -121,7 +122,7 @@ def build_config(args):
         except tomllib.TOMLDecodeError:
             print('Malformed config file')
             terminate(-1)
-        
+
         TOML['config'] = loaded_toml['config']
         for k in TOML['options'].keys():
             try:  # Go through all valid keys
@@ -259,7 +260,7 @@ def substitute_source(orig_url):
     domain = parsed_url.netloc
 
     logging.debug("Checking domain %s for substitution ", domain)
-    
+
     # Handle twitter
     twitter_subst = TOML["options"]["subst_twitter"]
     # Do not substitiute if subdomain is present (e.g. i.twitter.com)
@@ -353,7 +354,7 @@ def process_media_body(tt_iter):
                 url = deredir_url(tag.get('href'))
                 url = substitute_source(url)
                 url = clean_url(url)
-                
+
                 tweet_text += url
         else:
             logging.warning("No handler for tag in twitter text: " + tag.prettify())
@@ -520,7 +521,7 @@ def login(password):
             logging.fatal('Login to ' + TOML['config']['mastodon_instance'] + ' Failed\n')
             logging.fatal(me)
             terminate(-1)
-        
+
         if os.path.isfile(TOML['config']['mastodon_user'] + '.secret'):
             logging.warning('You successfully logged in using a password and an access token \
                             has been saved. The password can therefore be omitted from the \
@@ -689,7 +690,7 @@ def main(argv):
     logging.info('  subst_twitter            : ' + str(TOML['options']['subst_reddit']))
     logging.info('  log_level                : ' + str(TOML['options']['log_level']))
     logging.info('  log_days                 : ' + str(TOML['options']['log_days']))
-    
+
     # Try to open database. If it does not exist, create it
     sql = sqlite3.connect('twoot.db')
     db = sql.cursor()
@@ -990,7 +991,7 @@ def main(argv):
                 toot = mastodon.status_post(tweet['tweet_text'], media_ids=media_ids)
 
         except MastodonAPIError:
-            # Assuming this is an: 
+            # Assuming this is an:
             # ERROR ('Mastodon API returned error', 422, 'Unprocessable Entity', 'Cannot attach files that have not finished processing. Try again in a moment!')
             logging.warning('Mastodon API Error 422: Cannot attach files that have not finished processing. Waiting 15 seconds and retrying.')
             # Wait 15 seconds
@@ -1047,7 +1048,7 @@ def main(argv):
         sql.commit()
 
         logging.info('Deleted ' + str(excess_count) + ' old records from database.')
-    
+
     terminate(0)
 
 if __name__ == "__main__":
