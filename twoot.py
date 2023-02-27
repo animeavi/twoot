@@ -44,10 +44,10 @@ HTTPS_REQ_TIMEOUT = 10
 
 NITTER_URLS = [
     'https://nitter.lacontrevoie.fr', # rate limited
-    'https://twitter.femboy.hu/',  # Replace beparanoid 27/02/2023
+    'https://twitter.femboy.hu',  # Replace beparanoid 27/02/2023
     'https://n.l5.ca',
-    'https://nitter.it/', # added 27/02/2023
-    'https://nitter.grimneko.de/', # added 27/02/2023
+    'https://nitter.it', # added 27/02/2023
+    'https://nitter.grimneko.de', # added 27/02/2023
     'https://nitter.cutelab.space', # USA, added 16/02/2023
     'https://nitter.fly.dev', # anycast, added 06/02/2023
     'https://notabird.site', # anycast, added 06/02/2023
