@@ -44,7 +44,7 @@ HTTPS_REQ_TIMEOUT = 10
 
 NITTER_URLS = [
     'https://nitter.lacontrevoie.fr', # rate limited
-    'https://twitter.femboy.hu',  # Replace beparanoid 27/02/2023
+#    'https://twitter.femboy.hu',  # 404 on 06/05/2023
     'https://n.l5.ca',
     'https://nitter.it', # added 27/02/2023
     'https://nitter.grimneko.de', # added 27/02/2023
