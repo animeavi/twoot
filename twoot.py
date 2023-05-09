@@ -465,19 +465,6 @@ def contains_class(body_classes, some_class):
     return found
 
 
-def is_time_valid(timestamp):
-    ret = True
-    # Check that the tweet is not too young (might be deleted) or too old
-    age_in_hours = (time.time() - float(timestamp)) / 3600.0
-    min_delay_in_hours = TOML['options']['tweet_delay'] / 60.0
-    max_age_in_hours = TOML['options']['tweet_max_age'] * 24.0
-
-    if age_in_hours < min_delay_in_hours or age_in_hours > max_age_in_hours:
-        ret = False
-
-    return ret
-
-
 def login(password):
     """
     Login to Mastodon account and return mastodon object used to post content
