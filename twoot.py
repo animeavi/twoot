@@ -29,6 +29,7 @@ import shutil
 import sqlite3
 import sys
 import time
+
 from pathlib import Path
 from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse, urljoin
 
@@ -43,19 +44,19 @@ MAX_REC_COUNT = 50
 HTTPS_REQ_TIMEOUT = 10
 
 NITTER_URLS = [
-    'https://nitter.lacontrevoie.fr', # rate limited
-#    'https://twitter.femboy.hu',  # 404 on 06/05/2023
+    'https://nitter.lacontrevoie.fr',  # rate limited
+    #    'https://twitter.femboy.hu',  # 404 on 06/05/2023
     'https://n.l5.ca',
-    'https://nitter.it', # added 27/02/2023
-    'https://nitter.grimneko.de', # added 27/02/2023
-    'https://nitter.cutelab.space', # USA, added 16/02/2023
-    'https://nitter.fly.dev', # anycast, added 06/02/2023
-    'https://notabird.site', # anycast, added 06/02/2023
-#    'https://nitter.namazso.eu',  # lots of 403 27/02/2023
-#    'https://twitter.beparanoid.de',  # moved 27/022023
-#    'https://nitter.fdn.fr', # not updated, rate limited, removed 06/02/2023
-#    'https://nitter.hu',
-#    'https://nitter.privacydev.net', # USA, added 06/02/2023, removed 15/02/2023 too slow
+    'https://nitter.it',  # added 27/02/2023
+    'https://nitter.grimneko.de',  # added 27/02/2023
+    'https://nitter.cutelab.space',  # USA, added 16/02/2023
+    'https://nitter.fly.dev',  # anycast, added 06/02/2023
+    'https://notabird.site',  # anycast, added 06/02/2023
+    #    'https://nitter.namazso.eu',  # lots of 403 27/02/2023
+    #    'https://twitter.beparanoid.de',  # moved 27/022023
+    #    'https://nitter.fdn.fr', # not updated, rate limited, removed 06/02/2023
+    #    'https://nitter.hu',
+    #    'https://nitter.privacydev.net', # USA, added 06/02/2023, removed 15/02/2023 too slow
 ]
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
@@ -102,12 +103,12 @@ def build_config(args):
     }
 
     # Create default config object
-    TOML = {'config': {},'options': options}
+    TOML = {'config': {}, 'options': options}
 
     # Load config file if it was provided
     toml_file = args['f']
     if toml_file is not None:
-        try: # Included in python from version 3.11
+        try:  # Included in python from version 3.11
             import tomllib
         except ModuleNotFoundError:
             # for python < 3.11, tomli module must be installed
@@ -193,7 +194,8 @@ def deredir_url(url):
     ret = None
     try:
         # Download the page
-        ret = requests.head(url, headers=headers, allow_redirects=True, timeout=5)
+        ret = requests.head(url, headers=headers,
+                            allow_redirects=True, timeout=5)
     except:
         # If anything goes wrong keep the URL intact
         return url
@@ -231,7 +233,8 @@ def _remove_trackers_query(query_str):
         "xtor", "xtref", "adid",
     }
     query_to_clean = dict(parse_qsl(query_str, keep_blank_values=True))
-    query_cleaned = [(k, v) for k, v in query_to_clean.items() if k not in params_to_remove]
+    query_cleaned = [(k, v) for k, v in query_to_clean.items()
+                     if k not in params_to_remove]
     return urlencode(query_cleaned, doseq=True)
 
 
@@ -248,7 +251,8 @@ def _remove_trackers_fragment(fragment_str):
 
     if '=' in fragment_str:
         fragment_str = fragment_str.split('&')
-        query_cleaned = [i for i in fragment_str if i.split('=')[0] not in params_to_remove]
+        query_cleaned = [i for i in fragment_str if i.split(
+            '=')[0] not in params_to_remove]
         fragment_str = '&'.join(query_cleaned)
     return fragment_str
 
@@ -266,21 +270,21 @@ def substitute_source(orig_url):
     # Handle twitter
     twitter_subst = TOML["options"]["subst_twitter"]
     # Do not substitiute if subdomain is present (e.g. i.twitter.com)
-    if (domain == 'twitter.com' or domain == 'www.twitter.com')  and twitter_subst != []:
+    if (domain == 'twitter.com' or domain == 'www.twitter.com') and twitter_subst != []:
         domain = twitter_subst[random.randint(0, len(twitter_subst) - 1)]
         logging.debug("Replaced twitter.com by " + domain)
 
     # Handle youtube
     youtube_subst = TOML["options"]["subst_youtube"]
     # Do not substitiute if subdomain is present (e.g. i.youtube.com)
-    if (domain == 'youtube.com' or domain == 'wwww.youtube.com')  and youtube_subst != []:
+    if (domain == 'youtube.com' or domain == 'wwww.youtube.com') and youtube_subst != []:
         domain = youtube_subst[random.randint(0, len(youtube_subst) - 1)]
         logging.debug("Replaced youtube.com by " + domain)
 
     # Handle reddit
     reddit_subst = TOML["options"]["subst_reddit"]
     # Do not substitiute if subdomain is present (e.g. i.reddit.com)
-    if (domain == 'reddit.com' or domain == 'www.reddit.com')  and reddit_subst != []:
+    if (domain == 'reddit.com' or domain == 'www.reddit.com') and reddit_subst != []:
         domain = reddit_subst[random.randint(0, len(reddit_subst) - 1)]
         logging.debug("Replaced reddit.com by " + domain)
 
@@ -293,8 +297,8 @@ def substitute_source(orig_url):
         parsed_url.fragment
     ])
 
-
     return dest_url
+
 
 def clean_url(orig_url):
     """
@@ -359,7 +363,8 @@ def process_media_body(tt_iter):
 
                 tweet_text += url
         else:
-            logging.warning("No handler for tag in twitter text: " + tag.prettify())
+            logging.warning(
+                "No handler for tag in twitter text: " + tag.prettify())
 
     return tweet_text
 
@@ -404,7 +409,8 @@ def process_attachments(nitter_url, attachments_container, status_id, author_acc
     if gif_class is not None:
         gif_video_file = nitter_url + gif_class.source.get('src')
 
-        video_path = os.path.join('output', TOML['config']['twitter_account'], status_id, author_account, status_id)
+        video_path = os.path.join(
+            'output', TOML['config']['twitter_account'], status_id, author_account, status_id)
         os.makedirs(video_path, exist_ok=True)
 
         # Open directory for writing file
@@ -419,9 +425,11 @@ def process_attachments(nitter_url, attachments_container, status_id, author_acc
                     for chunk in r.iter_content(chunk_size=16 * 1024):
                         f.write(chunk)
 
-                logging.debug('Downloaded video of GIF animation from attachments')
+                logging.debug(
+                    'Downloaded video of GIF animation from attachments')
             except:  # Don't do anything if video can't be found or downloaded
-                logging.debug('Could not download video of GIF animation from attachments')
+                logging.debug(
+                    'Could not download video of GIF animation from attachments')
                 pass
 
         # Close directory
@@ -447,7 +455,8 @@ def process_attachments(nitter_url, attachments_container, status_id, author_acc
                 try:
                     ydl.download([video_file])
                 except Exception as e:
-                    logging.warning('Error downloading twitter video: ' + str(e))
+                    logging.warning(
+                        'Error downloading twitter video: ' + str(e))
                     vid_in_tweet = True
                 else:
                     logging.debug('downloaded twitter video from attachments')
@@ -498,7 +507,8 @@ def login(password):
             )
 
         except MastodonError as me:
-            logging.fatal('failed to create app on ' + TOML['config']['mastodon_instance'])
+            logging.fatal('failed to create app on ' +
+                          TOML['config']['mastodon_instance'])
             logging.fatal(me)
             terminate(-1)
 
@@ -517,10 +527,12 @@ def login(password):
                 password=password,
                 to_file=TOML['config']['mastodon_user'] + ".secret"
             )
-            logging.info('Logging in to ' + TOML['config']['mastodon_instance'])
+            logging.info('Logging in to ' +
+                         TOML['config']['mastodon_instance'])
 
         except MastodonError as me:
-            logging.fatal('Login to ' + TOML['config']['mastodon_instance'] + ' Failed\n')
+            logging.fatal(
+                'Login to ' + TOML['config']['mastodon_instance'] + ' Failed\n')
             logging.fatal(me)
             terminate(-1)
 
@@ -528,16 +540,18 @@ def login(password):
             logging.warning('You successfully logged in using a password and an access token \
                             has been saved. The password can therefore be omitted from the \
                             command-line in future invocations')
-    else: # No password provided, login with token
+    else:  # No password provided, login with token
         # Using token in existing .secret file
         if os.path.isfile(TOML['config']['mastodon_user'] + '.secret'):
             try:
                 mastodon = Mastodon(
                     access_token=TOML['config']['mastodon_user'] + '.secret',
-                    api_base_url='https://' + TOML['config']['mastodon_instance']
-            )
+                    api_base_url='https://' +
+                    TOML['config']['mastodon_instance']
+                )
             except MastodonError as me:
-                logging.fatal('Login to ' + TOML['config']['mastodon_instance'] + ' Failed\n')
+                logging.fatal(
+                    'Login to ' + TOML['config']['mastodon_instance'] + ' Failed\n')
                 logging.fatal(me)
                 terminate(-1)
         else:
@@ -553,8 +567,10 @@ def terminate(exit_code):
     Remove log messages older that duration specified in config from log file
     :param exit_code: return value to pass to shell when exiting
     """
-    logging.info('Run time : {t:2.1f} seconds.'.format(t=time.time() - START_TIME))
-    logging.info('_____________________________________________________________________________________')
+    logging.info('Run time : {t:2.1f} seconds.'.format(
+        t=time.time() - START_TIME))
+    logging.info(
+        '_____________________________________________________________________________________')
 
     # Close logger and log file
     logging.shutdown()
@@ -622,15 +638,23 @@ def main(argv):
     parser.add_argument('-i', metavar='<mastodon instance>', action='store')
     parser.add_argument('-m', metavar='<mastodon account>', action='store')
     parser.add_argument('-p', metavar='<mastodon password>', action='store')
-    parser.add_argument('-r', action='store_true', help='Also post replies to other tweets')
+    parser.add_argument('-r', action='store_true',
+                        help='Also post replies to other tweets')
     parser.add_argument('-s', action='store_true', help='Suppress retweets')
-    parser.add_argument('-l', action='store_true', help='Remove link redirection')
-    parser.add_argument('-u', action='store_true', help='Remove trackers from URLs')
-    parser.add_argument('-v', action='store_true', help='Ingest twitter videos and upload to Mastodon instance')
-    parser.add_argument('-o', action='store_true', help='Do not add reference to Original tweet')
-    parser.add_argument('-a', metavar='<max age (in days)>', action='store', type=float)
-    parser.add_argument('-d', metavar='<min delay (in mins)>', action='store', type=float)
-    parser.add_argument('-c', metavar='<max # of toots to post>', action='store', type=int)
+    parser.add_argument('-l', action='store_true',
+                        help='Remove link redirection')
+    parser.add_argument('-u', action='store_true',
+                        help='Remove trackers from URLs')
+    parser.add_argument('-v', action='store_true',
+                        help='Ingest twitter videos and upload to Mastodon instance')
+    parser.add_argument('-o', action='store_true',
+                        help='Do not add reference to Original tweet')
+    parser.add_argument('-a', metavar='<max age (in days)>',
+                        action='store', type=float)
+    parser.add_argument('-d', metavar='<min delay (in mins)>',
+                        action='store', type=float)
+    parser.add_argument(
+        '-c', metavar='<max # of toots to post>', action='store', type=int)
 
     # Parse command line
     args = vars(parser.parse_args())
@@ -666,7 +690,8 @@ def main(argv):
         # Disable all logging
         logging.disable(logging.CRITICAL)
     else:
-        logging.error('Invalid log_level %s in config file. Using WARNING.', str(TOML['options']['log_level']))
+        logging.error('Invalid log_level %s in config file. Using WARNING.', str(
+            TOML['options']['log_level']))
 
     # Set desired level of logging
     logger = logging.getLogger()
@@ -674,24 +699,41 @@ def main(argv):
 
     logging.info('Running with the following configuration:')
     logging.info('  Config File              : ' + str(args['f']))
-    logging.info('  twitter_account          : ' + TOML['config']['twitter_account'])
-    logging.info('  mastodon_instance        : ' + TOML['config']['mastodon_instance'])
-    logging.info('  mastodon_user            : ' + TOML['config']['mastodon_user'])
-    logging.info('  upload_videos            : ' + str(TOML['options']['upload_videos']))
-    logging.info('  post_reply_to            : ' + str(TOML['options']['post_reply_to']))
-    logging.info('  skip_retweets            : ' + str(TOML['options']['skip_retweets']))
-    logging.info('  remove_link_redirections : ' + str(TOML['options']['remove_link_redirections']))
-    logging.info('  remove_trackers_from_urls: ' + str(TOML['options']['remove_trackers_from_urls']))
+    logging.info('  twitter_account          : ' +
+                 TOML['config']['twitter_account'])
+    logging.info('  mastodon_instance        : ' +
+                 TOML['config']['mastodon_instance'])
+    logging.info('  mastodon_user            : ' +
+                 TOML['config']['mastodon_user'])
+    logging.info('  upload_videos            : ' +
+                 str(TOML['options']['upload_videos']))
+    logging.info('  post_reply_to            : ' +
+                 str(TOML['options']['post_reply_to']))
+    logging.info('  skip_retweets            : ' +
+                 str(TOML['options']['skip_retweets']))
+    logging.info('  remove_link_redirections : ' +
+                 str(TOML['options']['remove_link_redirections']))
+    logging.info('  remove_trackers_from_urls: ' +
+                 str(TOML['options']['remove_trackers_from_urls']))
     logging.info('  footer                   : ' + TOML['options']['footer'])
-    logging.info('  remove_original_tweet_ref: ' + str(TOML['options']['remove_original_tweet_ref']))
-    logging.info('  tweet_max_age            : ' + str(TOML['options']['tweet_max_age']))
-    logging.info('  tweet_delay              : ' + str(TOML['options']['tweet_delay']))
-    logging.info('  toot_cap                 : ' + str(TOML['options']['toot_cap']))
-    logging.info('  subst_twitter            : ' + str(TOML['options']['subst_twitter']))
-    logging.info('  subst_twitter            : ' + str(TOML['options']['subst_youtube']))
-    logging.info('  subst_twitter            : ' + str(TOML['options']['subst_reddit']))
-    logging.info('  log_level                : ' + str(TOML['options']['log_level']))
-    logging.info('  log_days                 : ' + str(TOML['options']['log_days']))
+    logging.info('  remove_original_tweet_ref: ' +
+                 str(TOML['options']['remove_original_tweet_ref']))
+    logging.info('  tweet_max_age            : ' +
+                 str(TOML['options']['tweet_max_age']))
+    logging.info('  tweet_delay              : ' +
+                 str(TOML['options']['tweet_delay']))
+    logging.info('  toot_cap                 : ' +
+                 str(TOML['options']['toot_cap']))
+    logging.info('  subst_twitter            : ' +
+                 str(TOML['options']['subst_twitter']))
+    logging.info('  subst_twitter            : ' +
+                 str(TOML['options']['subst_youtube']))
+    logging.info('  subst_twitter            : ' +
+                 str(TOML['options']['subst_reddit']))
+    logging.info('  log_level                : ' +
+                 str(TOML['options']['log_level']))
+    logging.info('  log_days                 : ' +
+                 str(TOML['options']['log_days']))
 
     # Try to open database. If it does not exist, create it
     sql = sqlite3.connect('twoot.db')
@@ -732,7 +774,8 @@ def main(argv):
 
     # Download twitter page of user
     try:
-        twit_account_page = session.get(url, headers=headers, timeout=HTTPS_REQ_TIMEOUT)
+        twit_account_page = session.get(
+            url, headers=headers, timeout=HTTPS_REQ_TIMEOUT)
     except requests.exceptions.ConnectionError:
         logging.fatal('Host did not respond when trying to download ' + url)
         terminate(-1)
@@ -765,7 +808,8 @@ def main(argv):
     # Extract twitter timeline
     timeline = soup.find_all('div', class_='timeline-item')
 
-    logging.info('Processing ' + str(len(timeline)) + ' tweets found in timeline')
+    logging.info('Processing ' + str(len(timeline)) +
+                 ' tweets found in timeline')
 
     # **********************************************************
     # Process each tweets and generate dictionary
@@ -775,7 +819,8 @@ def main(argv):
     in_db_cnt = 0
     for status in timeline:
         # Extract tweet ID and status ID
-        tweet_id = status.find('a', class_='tweet-link').get('href').strip('#m')
+        tweet_id = status.find(
+            'a', class_='tweet-link').get('href').strip('#m')
         status_id = tweet_id.split('/')[3]
 
         logging.debug('processing tweet %s', tweet_id)
@@ -783,10 +828,12 @@ def main(argv):
         # Extract time stamp
         time_string = status.find('span', class_='tweet-date').a.get('title')
         try:
-            timestamp = datetime.strptime(time_string, '%d/%m/%Y, %H:%M:%S').timestamp()
+            timestamp = datetime.strptime(
+                time_string, '%d/%m/%Y, %H:%M:%S').timestamp()
         except:
             # Dec 21, 2021 · 12:00 PM UTC
-            timestamp = datetime.strptime(time_string, '%b %d, %Y · %I:%M %p %Z').timestamp()
+            timestamp = datetime.strptime(
+                time_string, '%b %d, %Y · %I:%M %p %Z').timestamp()
 
         # Check if time is within acceptable range
         if not is_time_valid(timestamp):
@@ -819,7 +866,8 @@ def main(argv):
         author = status.find('a', class_='fullname').get('title')
 
         # Extract user name
-        author_account = status.find('a', class_='username').get('title').lstrip('@')
+        author_account = status.find(
+            'a', class_='username').get('title').lstrip('@')
 
         # Extract URL of full status page (for video download)
         full_status_url = 'https://twitter.com' + tweet_id
@@ -833,14 +881,16 @@ def main(argv):
         # of class 'tweet-body' in status. Others can be in a quoted tweet.
         replying_to_class = status.select("div.tweet-body > div.replying-to")
         if len(replying_to_class) != 0:
-            tweet_text += 'Replying to ' + replying_to_class[0].a.get_text() + '\n\n'
+            tweet_text += 'Replying to ' + \
+                replying_to_class[0].a.get_text() + '\n\n'
 
         # Check it the tweet is a retweet from somebody else
         if len(status.select("div.tweet-body > div > div.retweet-header")) != 0:
             tweet_text = 'RT from ' + author + ' (@' + author_account + ')\n\n'
 
         # extract iterator over tweet text contents
-        tt_iter = status.find('div', class_='tweet-content media-body').children
+        tt_iter = status.find(
+            'div', class_='tweet-content media-body').children
 
         # Process text of tweet
         tweet_text += process_media_body(tt_iter)
@@ -848,7 +898,8 @@ def main(argv):
         # Process quote: append link to tweet_text
         quote_div = status.find('a', class_='quote-link')
         if quote_div is not None:
-            tweet_text += substitute_source('\n\nhttps://twitter.com' + quote_div.get('href').strip('#m'))
+            tweet_text += substitute_source('\n\nhttps://twitter.com' +
+                                            quote_div.get('href').strip('#m'))
 
         # Process card : extract image if necessary
         card_class = status.find('a', class_='card-container')
@@ -861,7 +912,7 @@ def main(argv):
             pics, vid_in_tweet = process_attachments(nitter_url,
                                                      attachments_class,
                                                      status_id, author_account
-            )
+                                                     )
             photos.extend(pics)
             if vid_in_tweet:
                 tweet_text += '\n\n[Video embedded in original tweet]'
@@ -873,9 +924,11 @@ def main(argv):
         # Add footer with link to original tweet
         if TOML['options']['remove_original_tweet_ref'] == False:
             if TOML['options']['footer'] != '':
-                tweet_text += '\nOriginal tweet : ' + substitute_source(full_status_url)
+                tweet_text += '\nOriginal tweet : ' + \
+                    substitute_source(full_status_url)
             else:
-                tweet_text += '\n\nOriginal tweet : ' + substitute_source(full_status_url)
+                tweet_text += '\n\nOriginal tweet : ' + \
+                    substitute_source(full_status_url)
 
         # If no media was specifically added in the tweet, try to get the first picture
         # with "twitter:image" meta tag in first linked page in tweet text
@@ -888,9 +941,11 @@ def main(argv):
                         r = requests.get(link_url, timeout=HTTPS_REQ_TIMEOUT)
                         if r.status_code == 200:
                             # Matches the first instance of either twitter:image or twitter:image:src meta tag
-                            match = re.search(r'<meta name="twitter:image(?:|:src)" content="(.+?)".*?>', r.text)
+                            match = re.search(
+                                r'<meta name="twitter:image(?:|:src)" content="(.+?)".*?>', r.text)
                             if match is not None:
-                                url = match.group(1).replace('&amp;', '&')  # Remove HTML-safe encoding from URL if any
+                                # Remove HTML-safe encoding from URL if any
+                                url = match.group(1).replace('&amp;', '&')
                                 photos.append(url)
                     # Give up if anything goes wrong
                     except (requests.exceptions.ConnectionError,
@@ -900,12 +955,14 @@ def main(argv):
                             requests.exceptions.MissingSchema):
                         pass
                     else:
-                        logging.debug("downloaded twitter:image from linked page")
+                        logging.debug(
+                            "downloaded twitter:image from linked page")
 
         # Check if video was downloaded
         video_file = None
 
-        video_path = Path('./output') / TOML['config']['twitter_account'] / status_id
+        video_path = Path('./output') / \
+            TOML['config']['twitter_account'] / status_id
         if video_path.exists():
             # list video files
             video_file_list = list(video_path.glob('*.mp4'))
@@ -945,7 +1002,8 @@ def main(argv):
     for tweet in reversed(tweets):
         # Check if we have reached the cap on the number of toots to post
         if TOML['options']['toot_cap'] != 0 and posted_cnt >= TOML['options']['toot_cap']:
-            logging.info('%d toots not posted due to configured cap', len(tweets) - TOML['options']['toot_cap'])
+            logging.info('%d toots not posted due to configured cap',
+                         len(tweets) - TOML['options']['toot_cap'])
             break
 
         logging.debug('Uploading Tweet %s', tweet["tweet_id"])
@@ -978,7 +1036,8 @@ def main(argv):
                 if media:
                     try:
                         logging.debug('uploading picture to Mastodon')
-                        media_posted = mastodon.media_post(media.content, mime_type=media.headers['content-type'])
+                        media_posted = mastodon.media_post(
+                            media.content, mime_type=media.headers['content-type'])
                         media_ids.append(media_posted['id'])
                     except (MastodonAPIError, MastodonIllegalArgumentError,
                             TypeError):  # Media cannot be uploaded (invalid format, dead link, etc.)
@@ -990,28 +1049,34 @@ def main(argv):
             if len(media_ids) == 0:
                 toot = mastodon.status_post(tweet['tweet_text'])
             else:
-                toot = mastodon.status_post(tweet['tweet_text'], media_ids=media_ids)
+                toot = mastodon.status_post(
+                    tweet['tweet_text'], media_ids=media_ids)
 
         except MastodonAPIError:
             # Assuming this is an:
             # ERROR ('Mastodon API returned error', 422, 'Unprocessable Entity', 'Cannot attach files that have not finished processing. Try again in a moment!')
-            logging.warning('Mastodon API Error 422: Cannot attach files that have not finished processing. Waiting 15 seconds and retrying.')
+            logging.warning(
+                'Mastodon API Error 422: Cannot attach files that have not finished processing. Waiting 15 seconds and retrying.')
             # Wait 15 seconds
             time.sleep(15)
             # retry posting
             try:
-                toot = mastodon.status_post(tweet['tweet_text'], media_ids=media_ids)
+                toot = mastodon.status_post(
+                    tweet['tweet_text'], media_ids=media_ids)
             except MastodonError as me:
-                logging.error('posting ' + tweet['tweet_text'] + ' to ' + TOML['config']['mastodon_instance'] + ' Failed')
+                logging.error(
+                    'posting ' + tweet['tweet_text'] + ' to ' + TOML['config']['mastodon_instance'] + ' Failed')
                 logging.error(me)
 
         except MastodonError as me:
-            logging.error('posting ' + tweet['tweet_text'] + ' to ' + TOML['config']['mastodon_instance'] + ' Failed')
+            logging.error('posting ' + tweet['tweet_text'] + ' to ' +
+                          TOML['config']['mastodon_instance'] + ' Failed')
             logging.error(me)
 
         else:
             posted_cnt += 1
-            logging.debug('Tweet %s posted on %s', tweet['tweet_id'], TOML['config']['mastodon_user'])
+            logging.debug('Tweet %s posted on %s',
+                          tweet['tweet_id'], TOML['config']['mastodon_user'])
 
         # Insert toot id into database
         if 'id' in toot:
@@ -1030,7 +1095,8 @@ def main(argv):
     # Evaluate excess records in database
     excess_count = 0
 
-    db.execute('SELECT count(*) FROM toots WHERE twitter_account=?', (TOML['config']['twitter_account'],))
+    db.execute('SELECT count(*) FROM toots WHERE twitter_account=?',
+               (TOML['config']['twitter_account'],))
     db_count = db.fetchone()
     if db_count is not None:
         excess_count = db_count[0] - MAX_REC_COUNT
@@ -1049,9 +1115,11 @@ def main(argv):
             WHERE tweet_id IN excess''', (TOML['config']['twitter_account'], excess_count))
         sql.commit()
 
-        logging.info('Deleted ' + str(excess_count) + ' old records from database.')
+        logging.info('Deleted ' + str(excess_count) +
+                     ' old records from database.')
 
     terminate(0)
+
 
 if __name__ == "__main__":
     main(sys.argv)
