@@ -27,8 +27,8 @@ remove_trackers_from_urls = true
 footer = ""
 
 # Do not add reference to "Original tweet" on toots
-# default is false
-remove_original_tweet_ref = false
+# default is true
+remove_original_tweet_ref = true
 
 # Replace twitter.com in links by random alternative out of this list
 # List of nitter instances

@@ -86,7 +86,7 @@ def build_config(args):
         'remove_link_redirections': False,
         'remove_trackers_from_urls': True,
         'footer': '',
-        'remove_original_tweet_ref': False,
+        'remove_original_tweet_ref': True,
         'subst_twitter': [],
         'subst_youtube': [],
         'subst_reddit': [],
