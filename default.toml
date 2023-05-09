@@ -10,24 +10,16 @@ mastodon_user = ""
 
 [options]
 # Download videos from twitter and upload them on Mastodon
-# Default is false
-upload_videos = false
-
-# Also post the "reply-to" tweets from twitter account
-# Default is false
-post_reply_to = false
-
-# Do not post the retweets of other twitter accounts
-# Default is false
-skip_retweets = false
+# Default is true
+upload_videos = true
 
 # Replace redirected links in tweets with direct URLs
 # Default is false
 remove_link_redirections = false
 
 # Clean up URLs in tweets to remove trackers
-# Default is false
-remove_trackers_from_urls = false
+# Default is true
+remove_trackers_from_urls = true
 
 # Footer line added at bottom of toots
 # e.g. "#twitter #bot"
@@ -37,18 +29,6 @@ footer = ""
 # Do not add reference to "Original tweet" on toots
 # default is false
 remove_original_tweet_ref = false
-
-# Maximum age of tweet to post (in days, decimal values accepted)
-# Default is 1
-tweet_max_age = 1
-
-# Minimum age of tweet to post (in minutes)
-# Default is 0 (post tweet as soon as possible)
-tweet_delay = 0
-
-# Maximum number of toots to post in each run
-# Default is 0 (which means unlimited)
-toot_cap = 0
 
 # Replace twitter.com in links by random alternative out of this list
 # List of nitter instances
@@ -70,8 +50,8 @@ subst_reddit = []
 
 # Verbosity of log messages
  # One of DEBUG, INFO, WARNING, ERROR, CRITICAL, OFF
-# Default is "WARNING"
-log_level = "WARNING"
+# Default is "INFO"
+log_level = "INFO"
 
 # How many days to keep log messages for
 # Log messages older than log_days will be deleted
