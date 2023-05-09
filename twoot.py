@@ -19,6 +19,7 @@
 """
 
 import argparse
+import codecs
 from datetime import datetime, timedelta
 import logging
 import os
@@ -895,9 +896,10 @@ def main(argv):
 
     if 'export_json_path' in TOML['options'].keys():
         import json
+
         jsonpath = TOML['options']['export_json_path']
-        with open(jsonpath, "w") as jsonfile:
-            json.dump(json.dumps(tweet), jsonfile)
+        with open(jsonpath, "w", encoding='utf-8') as jsonfile:
+            json.dump(tweet, jsonfile, indent=2, ensure_ascii=False)
 
         logging.info('Exported Tweet JSON data to ' + jsonpath)
         exit(0)
