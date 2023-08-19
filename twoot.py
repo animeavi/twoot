@@ -428,26 +428,33 @@ def process_attachments(nitter_url, attachments_container, status_id, author_acc
     vid_class = attachments_container.find('div', class_='video-container')
     if vid_class is not None:
         if TOML['options']['upload_videos']:
-            from yt_dlp import YoutubeDL
+            videos = vid_class.find_all('video')
 
-            video_path = f"{author_account}/status/{status_id}"
-            video_file = urljoin('https://twitter.com', video_path)
-            ydl_opts = {
-                'outtmpl': "output/" + status_id + "/%(id)s.%(ext)s",
-                'format': "best[width<=500]",
-                'socket_timeout': 60,
-                'quiet': True,
-            }
+            out_video = "output/" + status_id
+            if len(videos) != 0:
+                os.makedirs(out_video, exist_ok=True)
+                vid_in_tweet = True
 
-            with YoutubeDL(ydl_opts) as ydl:
-                try:
-                    ydl.download([video_file])
-                except Exception as e:
-                    logging.warning(
-                        'Error downloading twitter video: ' + str(e))
-                    vid_in_tweet = True
-                else:
-                    logging.debug('downloaded twitter video from attachments')
+            i = 0
+            for video in videos:
+                video_url = video.find('source').get('src')
+                video_out_path = out_video + "/" + str(i) + ".mp4"
+
+                with requests.get(video_url, stream=True, timeout=HTTPS_REQ_TIMEOUT) as r:
+                    try:
+                        # Raise exception if response code is not 200
+                        r.raise_for_status()
+                        # Download chunks and write them to file
+                        with open(video_out_path, 'wb') as f:
+                            for chunk in r.iter_content(chunk_size=16 * 1024):
+                                f.write(chunk)
+
+                        logging.debug('Downloaded video from attachments')
+                    except:  # Don't do anything if video can't be found or downloaded
+                        logging.error('Could not download video from attachments')
+                        exit(0)
+
+                i += 1
 
     return pics, vid_in_tweet
 
@@ -828,8 +835,6 @@ def main(argv):
                                                  status_id, author_account
                                                  )
         photos.extend(pics)
-        if vid_in_tweet:
-            tweet_text += '\n\n[Video embedded in original tweet]'
 
     # Add custom footer from config file
     if TOML['options']['footer'] != '':
