@@ -878,15 +878,14 @@ def main(argv):
                         "downloaded twitter:image from linked page")
 
     # Check if video was downloaded
-    video_file = None
+    video_file = []
 
     video_path = Path('./output') / status_id
     if video_path.exists():
         # list video files
         video_file_list = list(video_path.glob('*.mp4'))
-        if len(video_file_list) != 0:
-            # Extract posix path of first video file in list
-            video_file = video_file_list[0].absolute().as_posix()
+        for video in video_file_list:
+            video_file.append(video.absolute().as_posix())
 
     # Add dictionary with content of tweet to list
     tweet = {
