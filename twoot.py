@@ -428,7 +428,7 @@ def process_attachments(nitter_url, attachments_container, status_id, author_acc
     vid_class = attachments_container.find('div', class_='video-container')
     if vid_class is not None:
         if TOML['options']['upload_videos']:
-            import youtube_dl
+            from yt_dlp import YoutubeDL
 
             video_path = f"{author_account}/status/{status_id}"
             video_file = urljoin('https://twitter.com', video_path)
@@ -439,7 +439,7 @@ def process_attachments(nitter_url, attachments_container, status_id, author_acc
                 'quiet': True,
             }
 
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            with YoutubeDL(ydl_opts) as ydl:
                 try:
                     ydl.download([video_file])
                 except Exception as e:
