@@ -35,6 +35,9 @@ from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse, urljoin
 import requests
 from bs4 import BeautifulSoup, element
 from mastodon import Mastodon, MastodonError, MastodonAPIError, MastodonIllegalArgumentError
+from base64 import b64encode
+
+USE_AUTH = False # Support basic HTTP auth
 
 # Number of records to keep in db table for each twitter account
 MAX_REC_COUNT = 50
@@ -59,13 +62,13 @@ NITTER_URLS = [
 
 # Update from https://www.whatismybrowser.com/guides/the-latest-user-agent/
 USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.46',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:110.0) Gecko/20100101 Firefox/110.0',
-    'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Vivaldi/5.6.2867.62',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Vivaldi/5.6.2867.62',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.2792.65',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; Xbox; Xbox One) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edge/44.18363.8131',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:130.0) Gecko/20100101 Firefox/130.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 OPR/114.0.0.0',
+    'Mozilla/5.0 (Windows NT 10.0; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 OPR/114.0.0.0'
 ]
 
 
@@ -609,6 +612,10 @@ def terminate(exit_code):
     exit(exit_code)
 
 
+def basic_auth(username, password):
+    token = b64encode(f"{username}:{password}".encode('utf-8')).decode("ascii")
+    return f'Basic {token}'
+
 def main(argv):
     # Start stopwatch
     global START_TIME
@@ -724,14 +731,17 @@ def main(argv):
     headers.update(
         {
             'User-Agent': USER_AGENTS[random.randint(0, len(USER_AGENTS) - 1)],
-            'Cookie': 'replaceTwitter=; replaceYouTube=; hlsPlayback=on; proxyVideos=',
+            'Cookie': 'replaceTwitter=; replaceYouTube=; hlsPlayback=on; proxyVideos='
         }
     )
+
+    if USE_AUTH:
+        headers.update({'Authorization' : basic_auth("root", "hunter2")})
 
     url = clean_url(TOML['config']['twitter_status'])
 
     status_id = url.split("/")[-1].split("?")[0]
-    status_author = url.split("twitter.com/")[-1].split("/")[0]
+    status_author = url.split("x.com/")[-1].split("/")[0]
 
     logging.debug('processing tweet %s', status_id)
 
@@ -820,7 +830,7 @@ def main(argv):
     # Process quote: append link to tweet_text
     quote_div = status.find('a', class_='quote-link')
     if quote_div is not None:
-        tweet_text += substitute_source('\n\nhttps://twitter.com' +
+        tweet_text += "\n\nRE: " + substitute_source('\n\nhttps://x.com' +
                                         quote_div.get('href').strip('#m'))
     # Process card : extract image if necessary
     card_class = status.find('a', class_='card-container')
